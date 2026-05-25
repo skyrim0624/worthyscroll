@@ -46,11 +46,30 @@ struct BlockDashboardView: View {
             } footer: {
                 Text("第一版先做手动屏蔽。临时解锁、睡眠模式和阈值恢复会在 Shield 功能块接入。")
             }
+
+            Section {
+                Button("临时解锁 5 分钟") {
+                    blockStore.grantTemporaryUnlock(minutes: 5)
+                }
+                .disabled(blockStore.activeSession == nil)
+
+                Button("临时解锁 10 分钟") {
+                    blockStore.grantTemporaryUnlock(minutes: 10)
+                }
+                .disabled(blockStore.activeSession == nil)
+
+                if let state = blockStore.temporaryUnlockState, state.isActive {
+                    LabeledContent("解锁到", value: state.endsAt.formatted(date: .omitted, time: .shortened))
+                }
+            } header: {
+                Text("临时解锁")
+            }
         }
         .navigationTitle("屏蔽")
         .familyActivityPicker(isPresented: $isPickerPresented, selection: $blockStore.selection)
         .task {
             authorizationService.refreshAuthorizationState()
+            blockStore.restoreShieldIfUnlockExpired()
         }
     }
 }

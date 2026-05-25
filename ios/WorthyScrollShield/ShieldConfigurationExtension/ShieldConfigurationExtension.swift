@@ -4,6 +4,10 @@ import UIKit
 
 final class ShieldConfigurationExtension: ShieldConfigurationDataSource {
     override func configuration(shielding application: Application) -> ShieldConfiguration {
+        InterventionEventStore().record(
+            InterventionEvent(eventType: .shieldSeen, metadata: ["target": "application"])
+        )
+
         ShieldConfiguration(
             backgroundBlurStyle: .systemMaterial,
             backgroundColor: UIColor.systemBackground,
@@ -13,7 +17,7 @@ final class ShieldConfigurationExtension: ShieldConfigurationDataSource {
                 color: .label
             ),
             subtitle: ShieldConfiguration.Label(
-                text: "这不是禁止娱乐，而是把这一刷换成更值得看的内容。",
+                text: "这不是禁止娱乐，是把这一刷换成更值得看的内容。",
                 color: .secondaryLabel
             ),
             primaryButtonLabel: ShieldConfiguration.Label(
