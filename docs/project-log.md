@@ -45,7 +45,7 @@ WorthyScroll 第一版不是单纯的阅读器，也不是单纯的 App Blocker�
 
 - [x] P0 项目日志和并行开发框架
 - [ ] P1 Xcode 原生工程外壳
-- [ ] P2 共享模型与本地内容缓存
+- [x] P2 共享模型与本地内容缓存
 - [ ] P3 公众号未读库存同步到 App
 - [x] P4 App 内内容货架和阅读器
 - [x] P5 Screen Time 授权与目标 App 选择
