@@ -27,7 +27,11 @@ struct SupabaseContentRepository: ContentRepository {
             throw ContentRepositoryError.supabaseSessionMissing
         }
 
-        guard var components = URLComponents(url: config.url.appendingPathComponent("rest/v1/content_items"), resolvingAgainstBaseURL: false) else {
+        let endpoint = config.url
+            .appendingPathComponent("rest")
+            .appendingPathComponent("v1")
+            .appendingPathComponent("content_items")
+        guard var components = URLComponents(url: endpoint, resolvingAgainstBaseURL: false) else {
             throw ContentRepositoryError.invalidSupabaseURL
         }
 

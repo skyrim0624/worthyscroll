@@ -57,6 +57,8 @@ final class ShelfViewModel: ObservableObject {
 
     private let repository: ContentRepository
     private let readingEventStore: ReadingEventStore
+    private let feedbackStore: ContentFeedbackStore
+    private let supabaseEventClient: SupabaseEventClient
 
     var filteredItems: [ContentItem] {
         items.filter { item in
@@ -82,10 +84,14 @@ final class ShelfViewModel: ObservableObject {
 
     init(
         repository: ContentRepository = CachedContentRepository(),
-        readingEventStore: ReadingEventStore = ReadingEventStore()
+        readingEventStore: ReadingEventStore = ReadingEventStore(),
+        feedbackStore: ContentFeedbackStore = ContentFeedbackStore(),
+        supabaseEventClient: SupabaseEventClient = SupabaseEventClient()
     ) {
         self.repository = repository
         self.readingEventStore = readingEventStore
+        self.feedbackStore = feedbackStore
+        self.supabaseEventClient = supabaseEventClient
     }
 
     func load() async {
@@ -110,6 +116,34 @@ final class ShelfViewModel: ObservableObject {
             }
             var copy = currentItem
             copy.status = .read
+            return copy
+        }
+    }
+
+    func giveFeedback(_ item: ContentItem, rating: FeedbackRating) {
+        let feedback = ContentFeedback(
+            itemID: item.id,
+            remoteItemID: item.remoteID,
+            rating: rating
+        )
+        feedbackStore.record(feedback)
+
+        Task {
+            try? await supabaseEventClient.upsertFeedback(feedback)
+        }
+    }
+
+    func archive(_ item: ContentItem) {
+        readingEventStore.record(
+            ReadingEvent(itemID: item.id, eventType: .archived, progressRatio: nil)
+        )
+
+        items = items.map { currentItem in
+            guard currentItem.id == item.id else {
+                return currentItem
+            }
+            var copy = currentItem
+            copy.status = .archived
             return copy
         }
     }

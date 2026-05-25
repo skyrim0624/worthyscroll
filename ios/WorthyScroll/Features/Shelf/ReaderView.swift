@@ -3,6 +3,8 @@ import SwiftUI
 struct ReaderView: View {
     let item: ContentItem
     var onMarkRead: () -> Void = {}
+    var onFeedback: (FeedbackRating) -> Void = { _ in }
+    var onArchive: () -> Void = {}
 
     @Environment(\.dismiss) private var dismiss
     private let readingEventStore = ReadingEventStore()
@@ -41,6 +43,36 @@ struct ReaderView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .padding(.top, 18)
+
+                HStack {
+                    Button {
+                        onFeedback(.liked)
+                    } label: {
+                        Label("喜欢", systemImage: "hand.thumbsup")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+
+                    Button {
+                        onFeedback(.disliked)
+                    } label: {
+                        Label("不喜欢", systemImage: "hand.thumbsdown")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                }
+
+                Button(role: .destructive) {
+                    readingEventStore.record(
+                        ReadingEvent(itemID: item.id, eventType: .archived, progressRatio: nil)
+                    )
+                    onArchive()
+                    dismiss()
+                } label: {
+                    Label("隐藏这条", systemImage: "archivebox")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)

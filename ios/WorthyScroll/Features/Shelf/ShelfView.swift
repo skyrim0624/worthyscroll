@@ -26,6 +26,10 @@ struct ShelfView: View {
                 NavigationLink {
                     ReaderView(item: item) {
                         viewModel.markRead(item)
+                    } onFeedback: { rating in
+                        viewModel.giveFeedback(item, rating: rating)
+                    } onArchive: {
+                        viewModel.archive(item)
                     }
                 } label: {
                     ContentRowView(item: item)
