@@ -10,8 +10,10 @@ enum ContentSource: String, Codable, CaseIterable, Sendable {
 
 enum ReadingStatus: String, Codable, Sendable {
     case unread
+    case reading
     case read
     case archived
+    case deleted
 }
 
 enum ContentVisual: String, Codable, Sendable {
@@ -24,6 +26,7 @@ enum ContentVisual: String, Codable, Sendable {
 
 struct ContentItem: Identifiable, Codable, Hashable, Sendable {
     let id: String
+    var remoteID: String?
     var title: String
     var sourceType: ContentSource
     var sourceName: String
@@ -42,6 +45,7 @@ struct ContentItem: Identifiable, Codable, Hashable, Sendable {
 
     init(
         id: String,
+        remoteID: String? = nil,
         title: String,
         sourceType: ContentSource,
         sourceName: String,
@@ -59,6 +63,7 @@ struct ContentItem: Identifiable, Codable, Hashable, Sendable {
         visual: ContentVisual = .document
     ) {
         self.id = id
+        self.remoteID = remoteID
         self.title = title
         self.sourceType = sourceType
         self.sourceName = sourceName
@@ -81,6 +86,7 @@ extension ContentItem {
     static let previewItems: [ContentItem] = [
         ContentItem(
             id: "preview-wechat-harness",
+            remoteID: nil,
             title: "一文读懂 Harness Engineering",
             sourceType: .wechatArticle,
             sourceName: "微信公众号",
@@ -99,6 +105,7 @@ extension ContentItem {
         ),
         ContentItem(
             id: "preview-wechat-video",
+            remoteID: nil,
             title: "未来战胜人工智能后的某一时刻",
             sourceType: .wechatVideo,
             sourceName: "视频号",

@@ -14,7 +14,7 @@ final class ShelfViewModel: ObservableObject {
 
     private let repository: ContentRepository
 
-    init(repository: ContentRepository = BundledContentRepository()) {
+    init(repository: ContentRepository = CachedContentRepository()) {
         self.repository = repository
     }
 
