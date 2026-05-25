@@ -57,8 +57,9 @@ WorthyScroll 第一版不是单纯的阅读器，也不是单纯的 App Blocker�
 
 ## 当前阻塞
 
-- 本机 `xcodebuild` 当前仍指向 Command Line Tools，不是完整 Xcode。可以先写工程文件和源码，但不能在本机完成 iOS build / simulator 验证。
+- 本机 `xcodebuild` 当前仍指向 Command Line Tools，不是完整 Xcode。已生成 `ios/WorthyScroll.xcodeproj`，但不能在本机完成 iOS build / simulator 验证。
 - Screen Time / FamilyControls 属于 Apple 受限能力，最终需要 Apple Developer 账号、entitlement、App Group 和真机测试。
+- Supabase 新项目创建工具要求先确认组织和费用，不能静默创建；当前没有云端项目 URL / anon key / service role key。
 
 ## 下一步
 

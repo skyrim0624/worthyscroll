@@ -25,8 +25,25 @@ targets:
       - path: WorthyScroll/Resources
     info:
       path: WorthyScroll/Resources/Info.plist
+      properties:
+        CFBundleName: WorthyScroll
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        WorthyScrollSupabaseAnonKey: "$(WORTHYSCROLL_SUPABASE_ANON_KEY)"
+        WorthyScrollSupabaseURL: "$(WORTHYSCROLL_SUPABASE_URL)"
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
     entitlements:
       path: WorthyScroll/WorthyScroll.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.skyrim0624.worthyscroll
+        com.apple.developer.family-controls: true
+    dependencies:
+      - target: WorthyScrollShieldConfiguration
+      - target: WorthyScrollShieldAction
+      - target: WorthyScrollDeviceActivityMonitor
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.skyrim0624.worthyscroll
@@ -40,8 +57,19 @@ targets:
       - path: WorthyScrollShared
     info:
       path: WorthyScrollShield/ShieldConfigurationExtension/Info.plist
+      properties:
+        CFBundleName: WorthyScrollShieldConfiguration
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.ManagedSettingsUI.shield-configuration-service
+          NSExtensionPrincipalClass: "$(PRODUCT_MODULE_NAME).ShieldConfigurationExtension"
     entitlements:
       path: WorthyScrollShield/ShieldConfigurationExtension/ShieldConfiguration.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.skyrim0624.worthyscroll
+        com.apple.developer.family-controls: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.skyrim0624.worthyscroll.shield-configuration
@@ -55,8 +83,19 @@ targets:
       - path: WorthyScrollShared
     info:
       path: WorthyScrollShield/ShieldActionExtension/Info.plist
+      properties:
+        CFBundleName: WorthyScrollShieldAction
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.ManagedSettingsUI.shield-action-service
+          NSExtensionPrincipalClass: "$(PRODUCT_MODULE_NAME).ShieldActionExtension"
     entitlements:
       path: WorthyScrollShield/ShieldActionExtension/ShieldAction.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.skyrim0624.worthyscroll
+        com.apple.developer.family-controls: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.skyrim0624.worthyscroll.shield-action
@@ -70,8 +109,19 @@ targets:
       - path: WorthyScrollShared
     info:
       path: WorthyScrollShield/DeviceActivityMonitorExtension/Info.plist
+      properties:
+        CFBundleName: WorthyScrollDeviceActivityMonitor
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.deviceactivity.monitor-extension
+          NSExtensionPrincipalClass: "$(PRODUCT_MODULE_NAME).DeviceActivityMonitorExtension"
     entitlements:
       path: WorthyScrollShield/DeviceActivityMonitorExtension/DeviceActivityMonitor.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.skyrim0624.worthyscroll
+        com.apple.developer.family-controls: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.skyrim0624.worthyscroll.device-activity-monitor

@@ -17,3 +17,4 @@
 - `blocking-core.md`：Screen Time 授权、目标选择、屏蔽策略。
 - `shield-interventions.md`：Shield 拦截页、摩擦、临时解锁、中途再拦。
 - `push-feedback.md`：推送、提醒、阅读反馈和推荐信号。
+- `release-readiness.md`：Xcode 工程生成、真机验证、权限申请和发布准备。
