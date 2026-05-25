@@ -1,0 +1,17 @@
+node_modules/
+dist/
+
+# 本地生成的数据和个人内容库存
+data/
+public/content-items.json
+public/note-assets/
+
+# 系统和编辑器缓存
+.DS_Store
+.idea/
+.vscode/
+
+# 日志和环境变量
+*.log
+.env
+.env.*
