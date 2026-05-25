@@ -22,6 +22,8 @@ struct BlockDashboardView: View {
                 }
             } header: {
                 Text("目标")
+            } footer: {
+                Text("已选择 \(blockStore.selectedTargetSummary.total) 个目标，其中 App \(blockStore.selectedTargetSummary.applications) 个，网站 \(blockStore.selectedTargetSummary.webDomains) 个，类别 \(blockStore.selectedTargetSummary.categories) 个。")
             }
 
             Section {
@@ -29,9 +31,15 @@ struct BlockDashboardView: View {
                     blockStore.applyManualBlock()
                 }
                 .buttonStyle(.borderedProminent)
+                .disabled(blockStore.selectedTargetSummary.total == 0)
 
                 Button("停止屏蔽", role: .destructive) {
                     blockStore.clearShield()
+                }
+
+                if let session = blockStore.activeSession {
+                    LabeledContent("当前会话", value: session.profile.name)
+                    LabeledContent("屏蔽目标", value: "\(session.selectedTargetSummary.total) 个")
                 }
             } header: {
                 Text("屏蔽")

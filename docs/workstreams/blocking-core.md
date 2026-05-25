@@ -1,6 +1,6 @@
 # P5/P6 Screen Time 授权与屏蔽核心
 
-状态：未开始  
+状态：进行中
 建议分支：`codex/blocking-core`  
 责任范围：`ios/WorthyScrollBlocking/**`、`ios/WorthyScrollShared/**`、`docs/workstreams/blocking-core.md`
 
@@ -10,20 +10,20 @@
 
 ## 验收标准
 
-- [ ] App 能请求 Screen Time / FamilyControls 授权。
-- [ ] 用户能用系统选择器选择要屏蔽的 App / 网站 / 类别。
-- [ ] 选择结果能保存在 App Group 可访问的位置。
-- [ ] Manual Block 能立即应用 Shield。
-- [ ] 能清除当前 Shield。
+- [x] App 能请求 Screen Time / FamilyControls 授权。
+- [x] 用户能用系统选择器选择要屏蔽的 App / 网站 / 类别。
+- [x] 选择结果能保存在 App Group 可访问的位置。
+- [x] Manual Block 能立即应用 Shield。
+- [x] 能清除当前 Shield。
 - [ ] 成功提交并推送本功能块。
 
 ## 步骤
 
-- [ ] 创建授权服务。
-- [ ] 创建 FamilyActivityPicker 页面。
-- [ ] 创建屏蔽目标持久化模型。
-- [ ] 创建 `ManagedSettingsStore` 屏蔽服务。
-- [ ] 创建 Manual Block 页面。
+- [x] 创建授权服务。
+- [x] 创建 FamilyActivityPicker 页面。
+- [x] 创建屏蔽目标持久化模型。
+- [x] 创建 `ManagedSettingsStore` 屏蔽服务。
+- [x] 创建 Manual Block 页面。
 - [ ] 更新本日志勾选状态并提交推送。
 
 ## 接口依赖
