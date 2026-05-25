@@ -1,6 +1,6 @@
 # P1 Xcode 原生工程外壳
 
-状态：未开始  
+状态：进行中
 建议分支：`codex/ios-shell`  
 责任范围：`ios/**`、`docs/workstreams/ios-shell.md`
 
@@ -10,19 +10,19 @@
 
 ## 验收标准
 
-- [ ] 仓库出现 `ios/` 工程目录。
-- [ ] 主 App 使用 SwiftUI，入口名为 `WorthyScrollApp`。
-- [ ] 工程预留 App Group、FamilyControls、ManagedSettings、DeviceActivity、Shield 扩展的目录和配置说明。
+- [x] 仓库出现 `ios/` 工程目录。
+- [x] 主 App 使用 SwiftUI，入口名为 `WorthyScrollApp`。
+- [x] 工程预留 App Group、FamilyControls、ManagedSettings、DeviceActivity、Shield 扩展的目录和配置说明。
 - [ ] 本机配置完整 Xcode 后，`xcodebuild` 能识别工程和 scheme。
 - [ ] 成功提交并推送本功能块。
 
 ## 步骤
 
-- [ ] 创建 iOS 工程目录结构。
-- [ ] 创建 SwiftUI 主 App、Tab 架构和占位页面。
-- [ ] 创建共享模型目录，先放最小 `ContentItem` 和 `BlockProfile`。
-- [ ] 创建扩展目录占位，明确后续 target 的职责。
-- [ ] 写入本机 Xcode 配置说明。
+- [x] 创建 iOS 工程目录结构。
+- [x] 创建 SwiftUI 主 App、Tab 架构和占位页面。
+- [x] 创建共享模型目录，先放最小 `ContentItem` 和 `BlockProfile`。
+- [x] 创建扩展目录占位，明确后续 target 的职责。
+- [x] 写入本机 Xcode 配置说明。
 - [ ] 更新本日志勾选状态并提交推送。
 
 ## 接口依赖
