@@ -4,6 +4,8 @@
 
 Web 原型继续保留，用来验证内容库存、公众号导入和站内阅读交互；最终移动端主线见 [`docs/ios-native-mvp.md`](docs/ios-native-mvp.md)。
 
+项目推进日志见 [`docs/project-log.md`](docs/project-log.md)。后续每个功能块会在 `docs/workstreams/` 下单独打勾记录，避免并行开发时互相覆盖。
+
 ## 当前原型
 
 已经有一个基于参考图视觉方向做的移动端原型：首页是「未读库存」内容货架，支持搜索、公众号筛选、网格 / 列表切换、详情弹层和 App 内全文阅读。
