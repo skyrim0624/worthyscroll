@@ -8,7 +8,7 @@ final class ShieldConfigurationExtension: ShieldConfigurationDataSource {
             InterventionEvent(eventType: .shieldSeen, metadata: ["target": "application"])
         )
 
-        ShieldConfiguration(
+        return ShieldConfiguration(
             backgroundBlurStyle: .systemMaterial,
             backgroundColor: UIColor.systemBackground,
             icon: UIImage(systemName: "hand.raised.fill"),

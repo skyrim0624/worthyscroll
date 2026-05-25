@@ -14,7 +14,8 @@
 - [x] 已生成 `ios/WorthyScroll.xcodeproj`。
 - [x] `project.yml` 能重复生成 Info.plist、entitlements 和 project。
 - [x] plist / entitlements 静态校验通过。
-- [ ] 完整 Xcode 下 `xcodebuild -list -project ios/WorthyScroll.xcodeproj` 通过。
+- [x] 完整 Xcode 下 `xcodebuild -list -project ios/WorthyScroll.xcodeproj` 通过。
+- [x] iPhone 17 Pro 模拟器上完成 Debug build、安装和启动。
 - [ ] 真机上完成 FamilyControls 授权验证。
 - [ ] 真机上完成 Manual Block / Shield / 临时解锁验证。
 - [ ] Supabase 云项目创建并应用迁移。
@@ -23,7 +24,6 @@
 
 ## 当前阻塞
 
-- 本机 `xcodebuild` 仍指向 `/Library/Developer/CommandLineTools`，缺完整 Xcode。
 - 本机 Docker CLI / Docker daemon 不可用，暂时不能跑本地 Supabase 数据库验证迁移。
 - Supabase 新项目创建工具要求先确认组织和费用，不能静默创建。
 - FamilyControls 是 Apple 受限 entitlement，需要在 Apple Developer 后台申请，通过前不能做完整发布验证。

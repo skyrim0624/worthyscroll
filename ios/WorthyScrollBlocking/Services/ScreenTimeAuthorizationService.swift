@@ -46,6 +46,8 @@ final class ScreenTimeAuthorizationService: ObservableObject {
             return .denied
         case .approved:
             return .approved
+        case .approvedWithDataAccess:
+            return .approved
         @unknown default:
             return .unknown
         }

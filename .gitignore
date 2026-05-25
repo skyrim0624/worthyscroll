@@ -10,6 +10,9 @@ public/note-assets/
 .DS_Store
 .idea/
 .vscode/
+ios/build/
+ios/**/*.xcuserstate
+ios/**/xcuserdata/
 
 # 日志和环境变量
 *.log

@@ -15,7 +15,7 @@ struct SettingsView: View {
                 LabeledContent("数据库", value: "Supabase")
             }
 
-            Section("Supabase 登录") {
+            Section {
                 SecureField("Access Token", text: $supabaseAccessToken)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
@@ -30,6 +30,8 @@ struct SettingsView: View {
                         supabaseAccessToken = ""
                     }
                 }
+            } header: {
+                Text("Supabase 登录")
             } footer: {
                 Text("这是开发期入口。正式版应替换成 Supabase Auth 登录，不能让普通用户手动处理 token。")
             }

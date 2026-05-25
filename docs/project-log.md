@@ -44,7 +44,7 @@ WorthyScroll 第一版不是单纯的阅读器，也不是单纯的 App Blocker�
 ## 总进度
 
 - [x] P0 项目日志和并行开发框架
-- [ ] P1 Xcode 原生工程外壳
+- [x] P1 Xcode 原生工程外壳
 - [x] P2 共享模型与本地内容缓存
 - [ ] P3 公众号未读库存同步到 App
 - [x] P4 App 内内容货架和阅读器
@@ -57,10 +57,9 @@ WorthyScroll 第一版不是单纯的阅读器，也不是单纯的 App Blocker�
 
 ## 当前阻塞
 
-- 本机 `xcodebuild` 当前仍指向 Command Line Tools，不是完整 Xcode。已生成 `ios/WorthyScroll.xcodeproj`，但不能在本机完成 iOS build / simulator 验证。
 - Screen Time / FamilyControls 属于 Apple 受限能力，最终需要 Apple Developer 账号、entitlement、App Group 和真机测试。
 - Supabase 新项目创建工具要求先确认组织和费用，不能静默创建；当前没有云端项目 URL / anon key / service role key。
 
 ## 下一步
 
-继续做 P10：真机验证、权限申请、Xcode 工程生成和发布准备。当前还有两个外部阻塞：完整 Xcode 未配置，Supabase 新项目创建需要组织和费用确认。
+继续做 P10：真机验证、权限申请和发布准备。当前外部阻塞是 Apple 受限 entitlement 与 Supabase 新项目创建需要组织和费用确认。
