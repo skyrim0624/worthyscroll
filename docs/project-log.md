@@ -47,7 +47,7 @@ WorthyScroll 第一版不是单纯的阅读器，也不是单纯的 App Blocker�
 - [ ] P1 Xcode 原生工程外壳
 - [ ] P2 共享模型与本地内容缓存
 - [ ] P3 公众号未读库存同步到 App
-- [ ] P4 App 内内容货架和阅读器
+- [x] P4 App 内内容货架和阅读器
 - [ ] P5 Screen Time 授权与目标 App 选择
 - [ ] P6 Manual Block 和屏蔽配置
 - [ ] P7 Shield 拦截页与 one sec 式摩擦
@@ -62,4 +62,4 @@ WorthyScroll 第一版不是单纯的阅读器，也不是单纯的 App Blocker�
 
 ## 下一步
 
-先做 P1：建立可打开的 iOS 原生工程外壳、模块目录和最小 SwiftUI App。由于当前没有完整 Xcode，P1 的验收先以文件结构、项目配置和静态检查为主；完整 build 验收等 Xcode 配好后补上。
+继续做 P5/P6：完善 Screen Time 授权、目标选择、Manual Block、屏蔽目标保存和清除屏蔽。由于当前没有完整 Xcode，原生能力先以源码和配置静态检查为主；完整 build 和真机验证等 Xcode 配好后补上。
