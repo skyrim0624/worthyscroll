@@ -88,6 +88,14 @@ final class SupabaseSessionStore {
         AppGroupStore.userDefaults.string(forKey: "supabaseAccessToken")
     }
 
+    func save(accessToken: String) {
+        AppGroupStore.userDefaults.set(accessToken, forKey: "supabaseAccessToken")
+    }
+
+    func clear() {
+        AppGroupStore.userDefaults.removeObject(forKey: "supabaseAccessToken")
+    }
+
     private init() {}
 }
 

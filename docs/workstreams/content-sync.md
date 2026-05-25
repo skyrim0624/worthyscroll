@@ -32,3 +32,8 @@
 
 - 读取器依赖 `ContentItem.markdown`、`ContentItem.plainText`、`ContentItem.estimatedMinutes`。
 - 推送功能依赖 `ContentItem.id`、`savedAt`、`readingStatus`。
+
+## 当前阻塞
+
+- Supabase 云项目尚未创建，不能验证云端写入。
+- 本机 Docker 不可用，`supabase migration list --local` 连接不到本地 Postgres。

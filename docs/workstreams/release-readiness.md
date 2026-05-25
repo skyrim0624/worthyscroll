@@ -24,6 +24,7 @@
 ## 当前阻塞
 
 - 本机 `xcodebuild` 仍指向 `/Library/Developer/CommandLineTools`，缺完整 Xcode。
+- 本机 Docker CLI / Docker daemon 不可用，暂时不能跑本地 Supabase 数据库验证迁移。
 - Supabase 新项目创建工具要求先确认组织和费用，不能静默创建。
 - FamilyControls 是 Apple 受限 entitlement，需要在 Apple Developer 后台申请，通过前不能做完整发布验证。
 
@@ -56,6 +57,8 @@ xcodebuild -list -project WorthyScroll.xcodeproj
 - iOS 配置变量：
   - `WORTHYSCROLL_SUPABASE_URL`
   - `WORTHYSCROLL_SUPABASE_ANON_KEY`
+- 配置样例：`ios/Config/WorthyScroll.example.xcconfig`
+- 当前 App 有开发期 Access Token 输入入口，正式版需要替换成 Supabase Auth 登录。
 
 ## 真机验证清单
 

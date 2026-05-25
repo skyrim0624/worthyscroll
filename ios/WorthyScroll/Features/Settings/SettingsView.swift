@@ -3,6 +3,8 @@ import UserNotifications
 
 struct SettingsView: View {
     @StateObject private var pushNotificationService = PushNotificationService()
+    @State private var supabaseAccessToken = SupabaseSessionStore.shared.accessToken ?? ""
+
     private let deviceInstallationStore = DeviceInstallationStore()
     private let supabaseEventClient = SupabaseEventClient()
 
@@ -11,6 +13,25 @@ struct SettingsView: View {
             Section("同步") {
                 LabeledContent("内容源", value: "公众号 / X / Substack")
                 LabeledContent("数据库", value: "Supabase")
+            }
+
+            Section("Supabase 登录") {
+                SecureField("Access Token", text: $supabaseAccessToken)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+
+                HStack {
+                    Button("保存 Token") {
+                        SupabaseSessionStore.shared.save(accessToken: supabaseAccessToken)
+                    }
+
+                    Button("清除", role: .destructive) {
+                        SupabaseSessionStore.shared.clear()
+                        supabaseAccessToken = ""
+                    }
+                }
+            } footer: {
+                Text("这是开发期入口。正式版应替换成 Supabase Auth 登录，不能让普通用户手动处理 token。")
             }
 
             Section("推送") {
