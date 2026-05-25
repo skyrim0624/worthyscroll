@@ -22,6 +22,37 @@ npm run dev -- --port 5174
 4. 脚本同时导出前端可读取的 JSON：`public/content-items.json`。
 5. App 首页读取这个 JSON，生成「现在刷点好的」未读内容货架。
 
+## Supabase 数据库
+
+数据库选型采用 Supabase。原因是第一版需要内容库存、阅读状态、反馈、推送队列、屏蔽会话和干预事件，Postgres + RLS 比 Cloudflare D1 更适合作为主数据层。
+
+本仓库已经包含本地 Supabase 配置和首个迁移：
+
+```bash
+supabase/migrations/20260525001842_init_worthyscroll_schema.sql
+```
+
+核心表：
+
+- `content_items`：收藏 / 未读内容库存。
+- `content_feedback`：点赞、拉踩、偏好反馈。
+- `reading_events`：打开、阅读进度、已读等事件。
+- `device_installations`：iOS 设备和推送 token。
+- `push_jobs`：待推送任务。
+- `block_profiles`：屏蔽配置。
+- `block_sessions`：一次屏蔽会话。
+- `intervention_events`：one sec 六大核心功能对应的干预事件。
+
+同步本地内容到 Supabase：
+
+```bash
+cp .env.example .env
+python3 scripts/import-wechat-notes.py
+python3 scripts/sync-content-to-supabase.py
+```
+
+`.env` 里的 `SUPABASE_SERVICE_ROLE_KEY` 只能用于本机导入脚本或服务端，不能放进前端或 iOS 客户端。
+
 ## 手动导入
 
 ```bash
