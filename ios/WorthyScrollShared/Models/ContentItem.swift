@@ -14,6 +14,14 @@ enum ReadingStatus: String, Codable, Sendable {
     case archived
 }
 
+enum ContentVisual: String, Codable, Sendable {
+    case document
+    case note
+    case poster
+    case video
+    case stack
+}
+
 struct ContentItem: Identifiable, Codable, Hashable, Sendable {
     let id: String
     var title: String
@@ -21,13 +29,52 @@ struct ContentItem: Identifiable, Codable, Hashable, Sendable {
     var sourceName: String
     var author: String?
     var url: URL?
-    var savedAt: Date?
+    var savedAt: String?
+    var savedAtRaw: String?
+    var filePath: String?
     var estimatedMinutes: Int
     var wordCount: Int?
     var markdown: String?
     var plainText: String?
     var excerpt: String
     var status: ReadingStatus
+    var visual: ContentVisual
+
+    init(
+        id: String,
+        title: String,
+        sourceType: ContentSource,
+        sourceName: String,
+        author: String? = nil,
+        url: URL? = nil,
+        savedAt: String? = nil,
+        savedAtRaw: String? = nil,
+        filePath: String? = nil,
+        estimatedMinutes: Int,
+        wordCount: Int? = nil,
+        markdown: String? = nil,
+        plainText: String? = nil,
+        excerpt: String,
+        status: ReadingStatus = .unread,
+        visual: ContentVisual = .document
+    ) {
+        self.id = id
+        self.title = title
+        self.sourceType = sourceType
+        self.sourceName = sourceName
+        self.author = author
+        self.url = url
+        self.savedAt = savedAt
+        self.savedAtRaw = savedAtRaw
+        self.filePath = filePath
+        self.estimatedMinutes = estimatedMinutes
+        self.wordCount = wordCount
+        self.markdown = markdown
+        self.plainText = plainText
+        self.excerpt = excerpt
+        self.status = status
+        self.visual = visual
+    }
 }
 
 extension ContentItem {
@@ -40,12 +87,15 @@ extension ContentItem {
             author: nil,
             url: nil,
             savedAt: nil,
+            savedAtRaw: nil,
+            filePath: nil,
             estimatedMinutes: 32,
             wordCount: nil,
             markdown: nil,
             plainText: "这是一篇用于原生 App 骨架预览的未读库存内容。后续会由 Obsidian 和 Supabase 同步真实正文。",
             excerpt: "从工程文章中整理 AI 应用层的 Harness 思路，适合放进项目方法库。",
-            status: .unread
+            status: .unread,
+            visual: .document
         ),
         ContentItem(
             id: "preview-wechat-video",
@@ -55,12 +105,15 @@ extension ContentItem {
             author: nil,
             url: nil,
             savedAt: nil,
+            savedAtRaw: nil,
+            filePath: nil,
             estimatedMinutes: 1,
             wordCount: nil,
             markdown: nil,
             plainText: "轻量娱乐内容也可以被 WorthyScroll 收进来，重点是不回到无限短视频流。",
             excerpt: "一个关于机械打字、计算机、青春电影和人与人羁绊的 AI MV。",
-            status: .unread
+            status: .unread,
+            visual: .video
         )
     ]
 }

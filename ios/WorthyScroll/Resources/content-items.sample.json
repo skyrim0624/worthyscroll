@@ -1,0 +1,38 @@
+[
+  {
+    "id": "sample-wechat-harness",
+    "title": "一文读懂 Harness Engineering",
+    "sourceType": "wechat_article",
+    "sourceName": "微信公众号",
+    "author": "未读库存",
+    "url": null,
+    "savedAt": "5 月 16 日",
+    "savedAtRaw": "2026-05-16",
+    "filePath": null,
+    "estimatedMinutes": 32,
+    "wordCount": 6400,
+    "markdown": null,
+    "plainText": "这是一条 iOS 原生 App 使用的样例内容。真实内容会由 Obsidian 笔记同步助手进入 Supabase，再同步到 App 的内容货架。",
+    "excerpt": "从工程文章中整理 AI 应用层的 Harness 思路，适合放进项目方法库。",
+    "status": "unread",
+    "visual": "document"
+  },
+  {
+    "id": "sample-wechat-video",
+    "title": "未来战胜人工智能后的某一时刻",
+    "sourceType": "wechat_video",
+    "sourceName": "视频号",
+    "author": "未读库存",
+    "url": null,
+    "savedAt": "5 月 21 日",
+    "savedAtRaw": "2026-05-21",
+    "filePath": null,
+    "estimatedMinutes": 1,
+    "wordCount": 120,
+    "markdown": null,
+    "plainText": "轻量娱乐内容也可以进入 WorthyScroll，但它不会把人重新送回无限短视频流。",
+    "excerpt": "一个关于机械打字、计算机、青春电影和人与人羁绊的 AI MV。",
+    "status": "unread",
+    "visual": "video"
+  }
+]
