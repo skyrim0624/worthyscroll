@@ -14,7 +14,7 @@
 - [x] 主 App 使用 SwiftUI，入口名为 `WorthyScrollApp`。
 - [x] 工程预留 App Group、FamilyControls、ManagedSettings、DeviceActivity、Shield 扩展的目录和配置说明。
 - [ ] 本机配置完整 Xcode 后，`xcodebuild` 能识别工程和 scheme。
-- [ ] 成功提交并推送本功能块。
+- [x] 成功提交并推送本功能块。
 
 ## 步骤
 
@@ -23,7 +23,7 @@
 - [x] 创建共享模型目录，先放最小 `ContentItem` 和 `BlockProfile`。
 - [x] 创建扩展目录占位，明确后续 target 的职责。
 - [x] 写入本机 Xcode 配置说明。
-- [ ] 更新本日志勾选状态并提交推送。
+- [x] 更新本日志勾选状态并提交推送。
 
 ## 接口依赖
 
