@@ -250,6 +250,13 @@ textarea:focus-visible {
   line-height: 1.42;
 }
 
+.annotation-panel em {
+  color: #7779df;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 760;
+}
+
 .annotation-layer {
   position: absolute;
   inset: 0;
@@ -317,7 +324,7 @@ textarea:focus-visible {
 .annotation-popover {
   position: absolute;
   z-index: 4;
-  width: 260px;
+  width: 310px;
   padding: 12px;
   border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: 18px;
@@ -326,12 +333,12 @@ textarea:focus-visible {
   pointer-events: auto;
 }
 
-.annotation-popover label {
+.annotation-popover > label {
   display: grid;
   gap: 8px;
 }
 
-.annotation-popover span {
+.annotation-popover > label > span {
   color: #62646a;
   font-size: 12px;
   font-weight: 820;
@@ -352,7 +359,99 @@ textarea:focus-visible {
   line-height: 1.45;
 }
 
-.annotation-popover div {
+.annotation-link-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 36px;
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.annotation-link-row input {
+  min-width: 0;
+  height: 36px;
+  border: 0;
+  outline: 0;
+  border-radius: 11px;
+  padding: 0 10px;
+  background: #f0f0f2;
+  color: #222328;
+  font: inherit;
+  font-size: 13px;
+}
+
+.annotation-attachment-tools {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.annotation-attachment-tools label {
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 11px;
+  background: #ececef;
+  color: #4b4d52;
+  font-size: 13px;
+  font-weight: 760;
+  cursor: pointer;
+}
+
+.annotation-attachment-tools input {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.annotation-attachment-list {
+  display: grid;
+  gap: 6px;
+  max-height: 96px;
+  margin: 9px 0 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.annotation-attachment-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 7px;
+  min-height: 30px;
+  padding: 4px 5px 4px 8px;
+  border-radius: 10px;
+  background: rgba(111, 116, 217, 0.1);
+}
+
+.annotation-attachment-list span {
+  color: #6f74d9;
+  font-size: 11px;
+  font-weight: 820;
+}
+
+.annotation-attachment-list b {
+  overflow: hidden;
+  color: #33343a;
+  font-size: 12px;
+  font-weight: 680;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.annotation-attachment-list button {
+  min-height: 26px;
+  padding: 0;
+  color: #8b2f2a;
+  background: transparent;
+}
+
+.annotation-popover > div:last-child {
   display: flex;
   justify-content: flex-end;
   gap: 8px;

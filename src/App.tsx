@@ -12,7 +12,10 @@ import {
   EyeOff,
   Grid2X2,
   Hand,
+  ImagePlus,
+  Link2,
   List,
+  Mic,
   PenLine,
   RotateCcw,
   Search,
@@ -40,6 +43,7 @@ type Annotation = {
   x: number;
   y: number;
   text: string;
+  attachments?: AnnotationAttachment[];
   viewLabel: string;
   createdAt: string;
   targetId?: string;
@@ -53,6 +57,7 @@ type AnnotationDraft = {
   x: number;
   y: number;
   text: string;
+  attachments?: AnnotationAttachment[];
   targetId?: string;
   targetLabel?: string;
   targetOffsetX?: number;
@@ -74,6 +79,14 @@ type AnnotationHoverTarget = {
   targetId: string;
   targetLabel: string;
 };
+type AnnotationAttachment = {
+  id: string;
+  kind: "link" | "image" | "audio";
+  label: string;
+  url: string;
+  mimeType?: string;
+  size?: number;
+};
 
 const sourceLabel: Record<ContentItem["sourceType"], string> = {
   wechat_article: "公众号",
@@ -84,6 +97,7 @@ const sourceLabel: Record<ContentItem["sourceType"], string> = {
 
 const ANNOTATION_STORAGE_KEY = "worthyscroll-annotations";
 const ANNOTATION_TARGET_SELECTOR = "[data-annotation-target]";
+const MAX_ANNOTATION_ATTACHMENT_BYTES = 5 * 1024 * 1024;
 const READ_IDS_KEY = "shortvideo-read-ids";
 const LIKED_IDS_KEY = "worthyscroll-liked-ids";
 const DISLIKED_IDS_KEY = "worthyscroll-disliked-ids";
@@ -254,6 +268,63 @@ function loadAnnotations(): Annotation[] {
   }
 }
 
+function createAnnotationAttachmentId() {
+  return `attachment-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function normalizeAttachmentUrl(value: string) {
+  const url = value.trim();
+  if (!url) {
+    return "";
+  }
+  if (/^(https?:|mailto:|tel:|data:)/i.test(url)) {
+    return url;
+  }
+  return `https://${url}`;
+}
+
+function formatFileSize(size?: number) {
+  if (!size) {
+    return "";
+  }
+  if (size < 1024 * 1024) {
+    return `${Math.ceil(size / 1024)} KB`;
+  }
+  return `${(size / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function fileToAnnotationAttachment(file: File): Promise<AnnotationAttachment> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const kind: AnnotationAttachment["kind"] = file.type.startsWith("audio/") ? "audio" : "image";
+      resolve({
+        id: createAnnotationAttachmentId(),
+        kind,
+        label: file.name,
+        url: String(reader.result || ""),
+        mimeType: file.type,
+        size: file.size,
+      });
+    };
+    reader.onerror = () => reject(reader.error || new Error("附件读取失败"));
+    reader.readAsDataURL(file);
+  });
+}
+
+function formatAttachmentForCodex(attachment: AnnotationAttachment, index: number) {
+  const sizeText = formatFileSize(attachment.size);
+  const meta = [attachment.mimeType, sizeText].filter(Boolean).join(", ");
+  const label = attachment.label || `${attachment.kind}-${index + 1}`;
+  if (attachment.kind === "link") {
+    return `  - 链接 ${index + 1}: [${label}](${attachment.url})`;
+  }
+  if (attachment.kind === "image") {
+    return `  - 图片 ${index + 1}: ${label}${meta ? `（${meta}）` : ""}\n    ![${label}](${attachment.url})`;
+  }
+  return `  - 音频 ${index + 1}: [${label}](${attachment.url})${meta ? `（${meta}）` : ""}`;
+}
+
 function loadIdSet(key: string): Set<string> {
   try {
     const parsed = JSON.parse(localStorage.getItem(key) || "[]");
@@ -280,7 +351,13 @@ function formatAnnotationsForCodex(annotations: Annotation[]) {
       "",
       `- 组件：${annotation.targetLabel || "旧版坐标批注"}`,
       `- 位置：x=${(annotation.targetOffsetX ?? annotation.x).toFixed(1)}%, y=${(annotation.targetOffsetY ?? annotation.y).toFixed(1)}%`,
-      `- 内容：${annotation.text}`,
+      `- 内容：${annotation.text || "（无文字说明）"}`,
+      ...(annotation.attachments?.length
+        ? [
+            "- 附件：",
+            ...annotation.attachments.map(formatAttachmentForCodex),
+          ]
+        : []),
       "",
     ]),
   ];
@@ -1041,7 +1118,10 @@ function AnnotationPanel({
                   {annotation.viewLabel}
                   {annotation.targetLabel ? ` · ${annotation.targetLabel}` : ""}
                 </small>
-                <b>{annotation.text}</b>
+                <b>{annotation.text || "仅附件批注"}</b>
+                {annotation.attachments?.length ? (
+                  <em>{annotation.attachments.length} 个附件</em>
+                ) : null}
               </button>
               <button onClick={() => onDelete(annotation.id)} aria-label={`删除批注 ${index + 1}`}>
                 <Trash2 size={15} />
@@ -1067,6 +1147,8 @@ function AnnotationLayer({
   layoutVersion,
   onEdit,
   onDraftTextChange,
+  onAddDraftAttachments,
+  onRemoveDraftAttachment,
   onSaveDraft,
   onCancelDraft,
   onDeleteDraft,
@@ -1083,11 +1165,18 @@ function AnnotationLayer({
   layoutVersion: number;
   onEdit: (annotation: Annotation) => void;
   onDraftTextChange: (text: string) => void;
+  onAddDraftAttachments: (attachments: AnnotationAttachment[]) => void;
+  onRemoveDraftAttachment: (attachmentId: string) => void;
   onSaveDraft: () => void;
   onCancelDraft: () => void;
   onDeleteDraft: () => void;
 }) {
   void layoutVersion;
+  const [draftLinkUrl, setDraftLinkUrl] = useState("");
+
+  useEffect(() => {
+    setDraftLinkUrl("");
+  }, [draft?.id, draft?.targetId, draft?.x, draft?.y]);
 
   function getAnnotationPoint(annotation: Annotation | AnnotationDraft): AnnotationPoint | null {
     const screenElement = screenRef.current;
@@ -1125,8 +1214,8 @@ function AnnotationLayer({
     }
     const screenRect = screenElement.getBoundingClientRect();
     return {
-      left: `${clamp(point.left + 18, 14, Math.max(14, screenRect.width - 276))}px`,
-      top: `${clamp(point.top - 34, 14, Math.max(14, screenRect.height - 156))}px`,
+      left: `${clamp(point.left + 18, 14, Math.max(14, screenRect.width - 326))}px`,
+      top: `${clamp(point.top - 34, 14, Math.max(14, screenRect.height - 336))}px`,
     };
   }
 
@@ -1149,6 +1238,37 @@ function AnnotationLayer({
       width: targetRect.width,
       height: targetRect.height,
     };
+  }
+
+  function addLinkAttachment() {
+    const url = normalizeAttachmentUrl(draftLinkUrl);
+    if (!url) {
+      return;
+    }
+    onAddDraftAttachments([
+      {
+        id: createAnnotationAttachmentId(),
+        kind: "link",
+        label: url.replace(/^https?:\/\//, ""),
+        url,
+      },
+    ]);
+    setDraftLinkUrl("");
+  }
+
+  async function addFileAttachments(files: FileList | null) {
+    const acceptedFiles = Array.from(files || []).filter((file) => {
+      return file.type.startsWith("image/") || file.type.startsWith("audio/");
+    });
+    const safeFiles = acceptedFiles.filter((file) => file.size <= MAX_ANNOTATION_ATTACHMENT_BYTES);
+    if (acceptedFiles.length !== safeFiles.length) {
+      window.alert("单个批注附件暂时限制在 5MB 以内。");
+    }
+    if (safeFiles.length === 0) {
+      return;
+    }
+    const attachments = await Promise.all(safeFiles.map(fileToAnnotationAttachment));
+    onAddDraftAttachments(attachments);
   }
 
   const visibleAnnotations = showAnnotations
@@ -1229,6 +1349,67 @@ function AnnotationLayer({
               autoFocus
             />
           </label>
+          <div className="annotation-link-row">
+            <input
+              value={draftLinkUrl}
+              onChange={(event) => setDraftLinkUrl(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  addLinkAttachment();
+                }
+              }}
+              placeholder="粘贴链接"
+            />
+            <button type="button" onClick={addLinkAttachment} aria-label="添加链接">
+              <Link2 size={15} />
+            </button>
+          </div>
+          <div className="annotation-attachment-tools">
+            <label>
+              <ImagePlus size={15} />
+              图片
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(event) => {
+                  void addFileAttachments(event.target.files);
+                  event.currentTarget.value = "";
+                }}
+              />
+            </label>
+            <label>
+              <Mic size={15} />
+              音频
+              <input
+                type="file"
+                accept="audio/*"
+                multiple
+                onChange={(event) => {
+                  void addFileAttachments(event.target.files);
+                  event.currentTarget.value = "";
+                }}
+              />
+            </label>
+          </div>
+          {draft.attachments?.length ? (
+            <ul className="annotation-attachment-list">
+              {draft.attachments.map((attachment) => (
+                <li key={attachment.id}>
+                  <span>{attachment.kind === "link" ? "链接" : attachment.kind === "image" ? "图片" : "音频"}</span>
+                  <b>{attachment.label}</b>
+                  <button
+                    type="button"
+                    onClick={() => onRemoveDraftAttachment(attachment.id)}
+                    aria-label={`移除附件 ${attachment.label}`}
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
           <div>
             {draft.id ? (
               <button type="button" className="danger" onClick={onDeleteDraft}>
@@ -1299,7 +1480,11 @@ export function App() {
   }, [readerItem]);
 
   useEffect(() => {
-    localStorage.setItem(ANNOTATION_STORAGE_KEY, JSON.stringify(annotations));
+    try {
+      localStorage.setItem(ANNOTATION_STORAGE_KEY, JSON.stringify(annotations));
+    } catch (error) {
+      console.warn("批注保存失败，可能是附件太大。", error);
+    }
   }, [annotations]);
 
   useEffect(() => {
@@ -1524,6 +1709,7 @@ export function App() {
       x: fallbackX,
       y: fallbackY,
       text: "",
+      attachments: [],
       targetId: target?.dataset.annotationTarget,
       targetLabel: target?.dataset.annotationLabel || currentViewLabel,
       targetOffsetX: targetRect ? ((event.clientX - targetRect.left) / targetRect.width) * 100 : undefined,
@@ -1542,6 +1728,7 @@ export function App() {
       x: annotation.x,
       y: annotation.y,
       text: annotation.text,
+      attachments: annotation.attachments || [],
       targetId: annotation.targetId,
       targetLabel: annotation.targetLabel,
       targetOffsetX: annotation.targetOffsetX,
@@ -1557,7 +1744,8 @@ export function App() {
     }
 
     const text = annotationDraft.text.trim();
-    if (!text) {
+    const attachments = annotationDraft.attachments || [];
+    if (!text && attachments.length === 0) {
       return;
     }
 
@@ -1565,7 +1753,7 @@ export function App() {
       setAnnotations((currentAnnotations) =>
         currentAnnotations.map((annotation) =>
           annotation.id === annotationDraft.id
-            ? { ...annotation, text, x: annotationDraft.x, y: annotationDraft.y }
+            ? { ...annotation, text, attachments, x: annotationDraft.x, y: annotationDraft.y }
             : annotation,
         ),
       );
@@ -1576,6 +1764,7 @@ export function App() {
         x: annotationDraft.x,
         y: annotationDraft.y,
         text,
+        attachments,
         viewLabel: annotationDraft.viewLabel || currentViewLabel,
         createdAt: new Date().toISOString(),
         targetId: annotationDraft.targetId,
@@ -1599,6 +1788,35 @@ export function App() {
     setAnnotationDraft((currentDraft) => (currentDraft?.id === id ? null : currentDraft));
     setActiveAnnotationId((currentId) => (currentId === id ? null : currentId));
     setHoverAnnotationTarget(null);
+  }
+
+  function addDraftAttachments(attachments: AnnotationAttachment[]) {
+    if (attachments.length === 0) {
+      return;
+    }
+    setAnnotationDraft((currentDraft) => {
+      if (!currentDraft) {
+        return currentDraft;
+      }
+      return {
+        ...currentDraft,
+        attachments: [...(currentDraft.attachments || []), ...attachments],
+      };
+    });
+  }
+
+  function removeDraftAttachment(attachmentId: string) {
+    setAnnotationDraft((currentDraft) => {
+      if (!currentDraft) {
+        return currentDraft;
+      }
+      return {
+        ...currentDraft,
+        attachments: (currentDraft.attachments || []).filter(
+          (attachment) => attachment.id !== attachmentId,
+        ),
+      };
+    });
   }
 
   function clearAnnotations() {
@@ -1752,6 +1970,8 @@ export function App() {
                     currentDraft ? { ...currentDraft, text } : currentDraft,
                   )
                 }
+                onAddDraftAttachments={addDraftAttachments}
+                onRemoveDraftAttachment={removeDraftAttachment}
                 onSaveDraft={saveAnnotationDraft}
                 onCancelDraft={() => {
                   setAnnotationDraft(null);
