@@ -17,7 +17,7 @@
 - [x] 内容页关键文案支持更细粒度的文本行批注。
 - [x] 组件批注在内容流滚动时跟随被批注组件移动。
 - [x] 新增批注时高亮当前选中的组件。
-- [x] 沉淀本地 Codex skill：`html-annotation-workbench`。
+- [x] 沉淀本地 Codex skill：`ui-review`。
 - [x] 成功构建并完成浏览器交互验证。
 - [x] 更新本日志勾选状态并提交推送。
 
@@ -36,4 +36,4 @@
 
 - Web 原型内容数据来自 `public/content-items.json`。
 - 组件锚点使用 `data-annotation-target` 和 `data-annotation-label`，后续新增可评审组件时应同步补齐。
-- 本地 skill 路径：`/Users/andreas/.codex/skills/html-annotation-workbench`。
+- 本地 skill 路径：`/Users/andreas/.codex/skills/ui-review`。
