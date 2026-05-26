@@ -886,6 +886,14 @@ function BlockingView({
     { id: "youtube-shorts", name: "YouTube Shorts", note: "只拦短视频入口" },
     { id: "x", name: "X", note: "先做轻度摩擦" },
   ];
+  const capabilities = [
+    { name: "打开前拦截", note: "目标 App / 网站会先出现系统 Shield" },
+    { name: "停一下", note: "等待、呼吸、确认，先把自动动作打断" },
+    { name: "问意图", note: "记录这次打开，并把人带回值得刷的内容" },
+    { name: "限时解锁", note: "允许 5 / 10 分钟使用，到点恢复屏蔽" },
+    { name: "再次拦截", note: "刷到阈值后重新挡住，避免一路滑下去" },
+    { name: "硬封锁", note: "Manual Block 直接屏蔽，不给轻易绕开" },
+  ];
 
   return (
     <section className="app-page blocking-page" data-annotation-target="blocking-page" data-annotation-label="屏蔽页">
@@ -905,6 +913,28 @@ function BlockingView({
           <span>{selectedTargets.size} 个目标应用</span>
         </div>
       </div>
+
+      <section
+        className="blocking-capabilities"
+        data-annotation-target="blocking-capabilities"
+        data-annotation-label="屏蔽六个核心能力"
+      >
+        <div className="capability-heading">
+          <span>六个拦截能力</span>
+          <b>原生版已接入 · 待真机验证</b>
+        </div>
+        <div className="capability-grid">
+          {capabilities.map((capability, index) => (
+            <div className="capability-card" key={capability.name}>
+              <i>{index + 1}</i>
+              <span>
+                <b>{capability.name}</b>
+                <small>{capability.note}</small>
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <div className="target-list">
         {targets.map((target) => {
