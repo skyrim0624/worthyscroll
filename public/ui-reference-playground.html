@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WorthyScroll UI Reference Playground</title>
+    <style>
+      :root {
+        --bg: #f1f1ee;
+        --ink: #141414;
+        --muted: #74736d;
+        --line: rgba(20, 20, 20, 0.14);
+        --panel: rgba(255, 255, 255, 0.72);
+        --accent: #1d4ed8;
+        color: var(--ink);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+          "PingFang SC", "Microsoft YaHei", sans-serif;
+        background: var(--bg);
+        font-synthesis: none;
+        text-rendering: geometricPrecision;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        background:
+          linear-gradient(to right, rgba(20, 20, 20, 0.045) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.045) 1px, transparent 1px),
+          var(--bg);
+        background-size: 44px 44px;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .page {
+        width: min(1440px, calc(100% - 48px));
+        margin: 0 auto;
+        padding: 42px 0 70px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 360px;
+        gap: 40px;
+        align-items: end;
+        min-height: 260px;
+        padding-bottom: 34px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .kicker {
+        margin: 0 0 14px;
+        color: var(--muted);
+        font-family: "IBM Plex Mono", "SF Mono", Consolas, monospace;
+        font-size: 12px;
+        font-weight: 720;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        max-width: 920px;
+        margin: 0;
+        font-size: clamp(54px, 8vw, 116px);
+        line-height: 0.88;
+        letter-spacing: 0;
+      }
+
+      .hero-note {
+        margin: 0;
+        color: #33332f;
+        font-size: 18px;
+        line-height: 1.62;
+      }
+
+      .controls {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        padding: 18px 0;
+        background: rgba(241, 241, 238, 0.82);
+        backdrop-filter: blur(18px);
+      }
+
+      .control {
+        min-height: 38px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 0 15px;
+        background: rgba(255, 255, 255, 0.62);
+        color: #33332f;
+        font-size: 13px;
+        font-weight: 760;
+        cursor: pointer;
+      }
+
+      .control.active {
+        border-color: #111;
+        background: #111;
+        color: #fff;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .case {
+        display: grid;
+        grid-template-columns: minmax(260px, 0.92fr) minmax(0, 1fr);
+        min-height: 620px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+
+      .case-media {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        align-content: center;
+        padding: 18px;
+        background: #ededeb;
+      }
+
+      .shot {
+        overflow: hidden;
+        border: 1px solid rgba(20, 20, 20, 0.08);
+        border-radius: 26px;
+        background: #fff;
+        box-shadow: 0 18px 42px rgba(20, 20, 20, 0.16);
+      }
+
+      .shot img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .case-body {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        gap: 24px;
+        padding: 26px;
+      }
+
+      .case-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 20px;
+      }
+
+      .case-index {
+        font-family: "IBM Plex Mono", "SF Mono", Consolas, monospace;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 760;
+      }
+
+      .source-link {
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 780;
+      }
+
+      h2 {
+        margin: 0;
+        font-size: clamp(32px, 4vw, 58px);
+        line-height: 0.95;
+        letter-spacing: 0;
+      }
+
+      .meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 16px;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        border: 1px solid currentColor;
+        border-radius: 999px;
+        padding: 0 9px;
+        color: #4c4b46;
+        font-size: 12px;
+        font-weight: 760;
+      }
+
+      .notes {
+        display: grid;
+        gap: 18px;
+        align-content: start;
+      }
+
+      .notes h3 {
+        margin: 0 0 8px;
+        font-size: 14px;
+        letter-spacing: 0;
+      }
+
+      .notes p {
+        margin: 0;
+        color: #3b3a35;
+        font-size: 15px;
+        line-height: 1.55;
+      }
+
+      .takeaway {
+        border-top: 1px solid var(--line);
+        padding-top: 18px;
+        color: #242420;
+        font-size: 16px;
+        font-weight: 760;
+        line-height: 1.45;
+      }
+
+      .summary {
+        margin-top: 30px;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 16px;
+      }
+
+      .summary-card {
+        min-height: 170px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 22px;
+        background: #111;
+        color: #fff;
+      }
+
+      .summary-card:nth-child(2) {
+        background: #f5f1a7;
+        color: #111;
+      }
+
+      .summary-card:nth-child(3) {
+        background: #d8e1ff;
+        color: #111;
+      }
+
+      .summary-card strong {
+        display: block;
+        margin-bottom: 12px;
+        font-size: 24px;
+        line-height: 1;
+      }
+
+      .summary-card span {
+        color: currentColor;
+        opacity: 0.76;
+        font-size: 15px;
+        line-height: 1.55;
+      }
+
+      @media (max-width: 1180px) {
+        .grid,
+        .summary {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 820px) {
+        .page {
+          width: min(100% - 26px, 620px);
+          padding-top: 24px;
+        }
+
+        .hero,
+        .case {
+          grid-template-columns: 1fr;
+        }
+
+        .case {
+          min-height: 0;
+        }
+
+        .case-media {
+          grid-template-columns: repeat(2, minmax(0, 170px));
+          justify-content: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <div>
+          <p class="kicker">WorthyScroll · UI Reference Playground</p>
+          <h1>10 个值得参考的内容型 App 界面</h1>
+        </div>
+        <p class="hero-note">
+          这些案例都和「刷点好的」相关：阅读、收藏、RSS、Newsletter、视觉化资料库、杂志式内容流。
+          重点看卡片节奏、封面比例、信息层级、底部导航和阅读入口。
+        </p>
+      </header>
+
+      <nav class="controls" aria-label="案例筛选">
+        <button class="control active" data-filter="all">全部</button>
+        <button class="control" data-filter="read-later">稍后读</button>
+        <button class="control" data-filter="magazine">杂志流</button>
+        <button class="control" data-filter="archive">收藏库</button>
+        <button class="control" data-filter="rss">RSS / Newsletter</button>
+      </nav>
+
+      <section class="grid" id="caseGrid"></section>
+
+      <section class="summary">
+        <div class="summary-card">
+          <strong>卡片先于列表</strong>
+          <span>WorthyScroll 不应该像任务清单，而应该像一个私人内容陈列架。封面、标题、来源三层足够，少放解释。</span>
+        </div>
+        <div class="summary-card">
+          <strong>阅读入口要克制</strong>
+          <span>从 Reader、Instapaper、Unread 学到：真正的阅读产品，打开正文后要尽快消失 UI，把注意力还给文字。</span>
+        </div>
+        <div class="summary-card">
+          <strong>收藏页可以更视觉化</strong>
+          <span>Raindrop 和 mymind 的价值是“翻找时有记忆点”。WorthyScroll 的收藏页可以比首页更像画廊。</span>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const cases = [
+        {
+          name: "Readwise Reader",
+          category: ["read-later", "rss"],
+          tags: ["Power Reader", "Inbox", "Highlight"],
+          source: "https://apps.apple.com/us/app/readwise-reader/id1567599761",
+          shots: [
+            "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/73/03/0f/73030f7d-b543-8432-6665-8219d5c42587/iphone55-01.png/392x696bb.png",
+            "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/58/ff/48/58ff4898-67d6-7774-fb18-41be5e4ba839/iphone55-03.png/392x696bb.png",
+          ],
+          good: "信息密度高但不乱：Inbox、Feed、Library 的结构非常清楚，适合重度阅读者。",
+          borrow: "我们可以借鉴它的“统一收件箱 + 阅读状态 + 高亮反馈”，但视觉上要比它更有封面感。",
+        },
+        {
+          name: "Matter",
+          category: ["read-later"],
+          tags: ["Clean", "Social Proof", "Calm"],
+          source: "https://apps.apple.com/us/app/matter-reading-app/id1501592184",
+          shots: [
+            "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/48/06/bd/4806bda5-3bac-ae27-688e-ce906416aae8/52f651de-62ff-4da3-bd34-4eac6c881f93_Organic_5.5_1.jpg/392x696bb.jpg",
+            "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/e2/cc/4d/e2cc4d1b-422e-3fc8-9a30-3106a8ea54b0/151c0585-258d-4bde-8726-47996dbee462_Organic_5.5_2.jpg/392x696bb.jpg",
+          ],
+          good: "白底、留白、轻量卡片都很干净，阅读欲望比工具感更强。",
+          borrow: "适合参考首页的轻盈程度：不要把“同步”“库存”“来源”讲太重。",
+        },
+        {
+          name: "Reeder",
+          category: ["rss"],
+          tags: ["Minimal RSS", "Typography", "Native"],
+          source: "https://apps.apple.com/us/app/reeder/id6475002485",
+          shots: [
+            "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/23/d6/d0/23d6d09c-42a1-ea99-d08b-f41ce57f4294/15d78372-0c96-48d0-a449-f3243c75f45c_0.png/392x696bb.png",
+            "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/70/ec/d5/70ecd5b2-2edf-3c6f-d424-9346be0c0b8a/7753cd0e-e517-408c-b6af-ef35a32ca6c0_2.png/392x696bb.png",
+          ],
+          good: "非常克制，几乎没有装饰，靠系统级排版、分组和阅读流来建立质感。",
+          borrow: "正文阅读页可以学习 Reeder：工具栏少、背景安静、字体和行距优先。",
+        },
+        {
+          name: "Instapaper",
+          category: ["read-later"],
+          tags: ["Classic", "Text First", "Offline"],
+          source: "https://apps.apple.com/us/app/instapaper/id288545208",
+          shots: [
+            "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/f3/4d/e1/f34de16f-e720-bd4d-23e5-f583c8d41a79/mzl.nnykcvot.png/392x696bb.png",
+            "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/18/62/72/186272d6-284e-d222-ebff-bc65c00acd83/mzl.stjuzglo.png/392x696bb.png",
+          ],
+          good: "它几乎是稍后读产品的原型：列表朴素，正文排版有稳定感。",
+          borrow: "可以借鉴“阅读是一等公民”：不要让推荐、标签、操作按钮抢正文的戏。",
+        },
+        {
+          name: "Flipboard",
+          category: ["magazine"],
+          tags: ["Magazine", "Cover", "Topic"],
+          source: "https://apps.apple.com/us/app/flipboard-the-social-magazine/id358801284",
+          shots: [
+            "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource116/v4/c1/4c/9c/c14c9ccf-7782-c253-0a02-e6780ba880d0/9a89614e-6687-4881-9001-f419e033a079_FLIP_83305-01_Touchpoints_AppStore_5-5inch_1242x2688_01.png/392x696bb.png",
+            "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource126/v4/9b/c5/ae/9bc5aeee-7a14-38f0-5cc9-757fba830e11/58c5cf06-099a-4c46-bee6-3eb5c6b43e7f_FLIP_83305-01_Touchpoints_AppStore_5-5inch_1242x2688_02.png/392x696bb.png",
+          ],
+          good: "它把新闻做成杂志封面，图片、标题、栏目感很强，浏览行为更接近翻杂志。",
+          borrow: "WorthyScroll 如果要“刷”，可以学 Flipboard 的封面节奏，但需要比它更私人、更少热点噪音。",
+        },
+        {
+          name: "Substack",
+          category: ["rss"],
+          tags: ["Newsletter", "Creator", "Feed"],
+          source: "https://apps.apple.com/us/app/substack/id1581650857",
+          shots: [
+            "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/3f/f3/c0/3ff3c06d-2dba-a51d-cca4-57fbaccc1166/d0af3556-9bce-42fd-9402-2f95bf0c8822_1__U00281_U0029.jpg/392x696bb.jpg",
+            "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/16/7f/0a/167f0a75-e814-7aa4-2df4-c0b346e14fb4/a2f798cb-8339-4ac9-831d-defd4d2623b7_2__U00281_U0029.jpg/392x696bb.jpg",
+          ],
+          good: "把作者关系放在信息架构中心，Feed 不只是文章列表，而是“我关注的人”。",
+          borrow: "以后做推荐时，可以把“作者 / 来源可信度”做成比平台来源更重要的视觉线索。",
+        },
+        {
+          name: "Raindrop.io",
+          category: ["archive"],
+          tags: ["Bookmark", "Grid", "Collection"],
+          source: "https://apps.apple.com/us/app/raindrop-io/id1021913807",
+          shots: [
+            "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/f8/93/2f/f8932f23-dacc-af49-dcd6-28ee7d186e8b/938206d3-73c7-4a7b-ac25-bf0d6c2c7500_5.5inc-1.png/392x696bb.png",
+            "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/63/4c/fe/634cfe8c-73d6-bf23-0ce1-3e4e20ad967c/4d052c1f-afd8-4693-a49b-8c6978e176b1_5.5inc-2.png/392x696bb.png",
+          ],
+          good: "收藏库的视觉化做得好：缩略图、集合、标签都能帮助记忆和回找。",
+          borrow: "WorthyScroll 的收藏页可以更像 Raindrop：不是另一条阅读流，而是可整理的私人库。",
+        },
+        {
+          name: "mymind",
+          category: ["archive", "magazine"],
+          tags: ["Visual Memory", "Masonry", "No Folder"],
+          source: "https://apps.apple.com/us/app/mymind-extend-your-mind/id1520332347",
+          shots: [
+            "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource126/v4/7e/c4/99/7ec49915-9690-0f4e-ec51-6eb78bc3c474/e04c6e60-630a-46db-b9f1-0862774c56ef_iPhone_n3-1.jpg/392x696bb.jpg",
+            "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource116/v4/e2/b0/82/e2b0828b-a124-5bd2-9646-11c145931c61/5871c437-0be3-4572-a173-d649e4416182_iPhone_n3-2.jpg/392x696bb.jpg",
+          ],
+          good: "它不是列表，而是记忆墙。图片、文字、链接混排，整体有私人品味感。",
+          borrow: "收藏后的“回看”体验可以学 mymind：让内容像被策展，而不是被归档。",
+        },
+        {
+          name: "Newsletter Reader by Meco",
+          category: ["rss"],
+          tags: ["Newsletter", "Inbox", "Calm"],
+          source: "https://apps.apple.com/us/app/newsletter-reader-by-meco/id1505542541",
+          shots: [
+            "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/5e/1b/7c/5e1b7cae-ab1b-a349-111b-ba90bb61b53c/2c42e9da-6d5a-47ab-b3e6-b33a043843c1_5.5_1.jpg/392x696bb.jpg",
+            "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/9d/5a/35/9d5a35d6-4f4c-e3a5-c8e1-28661be227f6/64844108-9587-4ef4-ae06-ec9ea4dacfd6_5.5_2.jpg/392x696bb.jpg",
+          ],
+          good: "它把 Newsletter 从邮箱噪音里剥离出来，卡片和栏目比邮件客户端更轻。",
+          borrow: "公众号 / Substack 未来都可以统一成 Meco 式“阅读收件箱”，但不要出现邮件工具感。",
+        },
+        {
+          name: "Unread",
+          category: ["rss"],
+          tags: ["RSS", "Theme", "Reading"],
+          source: "https://apps.apple.com/us/app/unread-an-rss-reader/id1363637349",
+          shots: [
+            "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/92/52/fd/9252fdf2-39df-3a40-a1f7-0c99eb299006/e7c2a097-8025-4d88-af87-21e594acfc48_01_-_Article.png/392x696bb.png",
+            "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/88/09/6c/88096c76-1c01-8092-bf78-1c41ff23dcb6/eaab5e41-23a4-4c5f-8c24-e5ca8eec2d2d_02_-_Color_Themes.png/392x696bb.png",
+          ],
+          good: "主题、阅读排版、手势都很专注，适合长时间读 RSS 而不疲劳。",
+          borrow: "值得借鉴它的色彩主题系统：用户晚上想娱乐/轻读时，可以切换更放松的阅读氛围。",
+        },
+      ];
+
+      const grid = document.querySelector("#caseGrid");
+      const controls = document.querySelectorAll(".control");
+
+      function render(filter = "all") {
+        grid.innerHTML = "";
+        cases
+          .filter((item) => filter === "all" || item.category.includes(filter))
+          .forEach((item, index) => {
+            const article = document.createElement("article");
+            article.className = "case";
+            article.innerHTML = `
+              <div class="case-media">
+                ${item.shots
+                  .map(
+                    (shot) => `
+                      <a class="shot" href="${shot}" target="_blank" rel="noreferrer">
+                        <img src="${shot}" alt="${item.name} app screenshot" loading="eager" />
+                      </a>
+                    `,
+                  )
+                  .join("")}
+              </div>
+              <div class="case-body">
+                <div>
+                  <div class="case-top">
+                    <span class="case-index">${String(index + 1).padStart(2, "0")}</span>
+                    <a class="source-link" href="${item.source}" target="_blank" rel="noreferrer">Source ↗</a>
+                  </div>
+                  <h2>${item.name}</h2>
+                  <div class="meta-row">${item.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}</div>
+                </div>
+                <div class="notes">
+                  <div>
+                    <h3>优点</h3>
+                    <p>${item.good}</p>
+                  </div>
+                  <div>
+                    <h3>可借鉴到 WorthyScroll</h3>
+                    <p>${item.borrow}</p>
+                  </div>
+                </div>
+                <div class="takeaway">${item.category.join(" · ")}</div>
+              </div>
+            `;
+            grid.appendChild(article);
+          });
+      }
+
+      controls.forEach((control) => {
+        control.addEventListener("click", () => {
+          controls.forEach((item) => item.classList.remove("active"));
+          control.classList.add("active");
+          render(control.dataset.filter);
+        });
+      });
+
+      render();
+    </script>
+  </body>
+</html>
