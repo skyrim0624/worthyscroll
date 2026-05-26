@@ -535,7 +535,7 @@ textarea:focus-visible {
 
 .brand-header,
 .section-header {
-  margin: 16px 0 24px;
+  margin: 16px 0 22px;
 }
 
 .brand-header {
@@ -547,10 +547,10 @@ textarea:focus-visible {
 
 .brand-header p,
 .section-header p {
-  margin: 0 0 7px;
-  color: #7b7c82;
+  margin: 7px 0 0;
+  color: #85868b;
   font-size: 13px;
-  font-weight: 780;
+  font-weight: 720;
   letter-spacing: 0;
 }
 
@@ -562,17 +562,6 @@ textarea:focus-visible {
   line-height: 1.06;
   font-weight: 840;
   letter-spacing: 0;
-}
-
-.brand-header button {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.72);
-  color: #4c4e54;
-  box-shadow: var(--card-shadow);
 }
 
 .search-box {
@@ -647,24 +636,6 @@ textarea:focus-visible {
   background: #ffffff;
   color: #141517;
   box-shadow: 0 9px 22px rgba(36, 37, 40, 0.14);
-}
-
-.content-summary {
-  display: grid;
-  gap: 5px;
-  margin: 3px 0 16px;
-  color: #888a90;
-}
-
-.content-summary strong {
-  color: #25262b;
-  font-size: 15px;
-  font-weight: 820;
-}
-
-.content-summary span {
-  font-size: 13px;
-  line-height: 1.38;
 }
 
 .daily-rail {
@@ -772,10 +743,7 @@ textarea:focus-visible {
 }
 
 .card-header {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 8px;
+  min-width: 0;
 }
 
 .content-card.list .card-header {
@@ -784,33 +752,42 @@ textarea:focus-visible {
 
 .card-header h2 {
   margin: 0;
-  min-height: 44px;
+  min-height: 72px;
   color: #171719;
   font-size: 18px;
-  font-weight: 730;
-  line-height: 1.2;
+  font-weight: 760;
+  line-height: 1.32;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  text-wrap: pretty;
 }
 
 .content-card.list .card-header h2 {
   min-height: 0;
-  font-size: 19px;
+  font-size: 20px;
+  line-height: 1.28;
+  -webkit-line-clamp: 2;
 }
 
-.card-header p {
-  margin: 6px 0 0;
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 520;
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 9px 0 0;
 }
 
-.card-header svg {
-  color: #aaa;
-  margin-top: 2px;
-  flex: 0 0 auto;
+.card-tags span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: rgba(232, 233, 236, 0.92);
+  color: #686a70;
+  font-size: 12px;
+  font-weight: 720;
 }
 
 .preview {

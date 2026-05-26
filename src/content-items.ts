@@ -6,6 +6,7 @@ export type ContentItem = {
   sourceType: ContentSource;
   sourceName: string;
   author?: string;
+  tags?: string[];
   url?: string;
   savedAt: string;
   savedAtRaw?: string;
@@ -25,6 +26,7 @@ export const contentItems: ContentItem[] = [
     title: "未来战胜人工智能后的某一时刻",
     sourceType: "wechat_video",
     sourceName: "视频号",
+    tags: ["视频", "娱乐"],
     savedAt: "5 月 21 日",
     estimatedMinutes: 1,
     visual: "video",
@@ -36,6 +38,7 @@ export const contentItems: ContentItem[] = [
     title: "一文读懂 Harness Engineering",
     sourceType: "wechat_article",
     sourceName: "微信公众号",
+    tags: ["AI", "工程"],
     savedAt: "5 月 16 日",
     estimatedMinutes: 32,
     visual: "document",
@@ -47,6 +50,7 @@ export const contentItems: ContentItem[] = [
     title: "探秘 Claude Code，搞懂 Agent Harness",
     sourceType: "wechat_article",
     sourceName: "微信公众号",
+    tags: ["AI", "Agent"],
     savedAt: "5 月 14 日",
     estimatedMinutes: 19,
     visual: "note",
@@ -58,6 +62,7 @@ export const contentItems: ContentItem[] = [
     title: "CMI 音乐即兴戏剧工作坊",
     sourceType: "wechat_article",
     sourceName: "微信公众号",
+    tags: ["活动", "戏剧"],
     savedAt: "5 月 11 日",
     estimatedMinutes: 1,
     visual: "poster",
@@ -69,6 +74,7 @@ export const contentItems: ContentItem[] = [
     title: "亲手搓出你的 AI 塔罗占卜师",
     sourceType: "wechat_article",
     sourceName: "微信公众号",
+    tags: ["AI", "工具"],
     savedAt: "5 月 11 日",
     estimatedMinutes: 1,
     visual: "stack",
@@ -80,6 +86,7 @@ export const contentItems: ContentItem[] = [
     title: "部署你的虾兵蟹将",
     sourceType: "wechat_article",
     sourceName: "微信公众号",
+    tags: ["工具", "自动化"],
     savedAt: "5 月 11 日",
     estimatedMinutes: 1,
     visual: "document",

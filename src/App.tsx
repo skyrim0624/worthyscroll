@@ -12,7 +12,6 @@ import {
   Grid2X2,
   Hand,
   List,
-  MoreHorizontal,
   PenLine,
   RotateCcw,
   Search,
@@ -180,6 +179,45 @@ function safeAnnotationId(value: string) {
 
 function contentTargetId(prefix: string, item: ContentItem) {
   return `${prefix}-${safeAnnotationId(item.id)}`;
+}
+
+function contentTags(item: ContentItem) {
+  if (item.tags?.length) {
+    return item.tags.slice(0, 3);
+  }
+
+  const text = `${item.title} ${item.excerpt}`.toLowerCase();
+  const tags: string[] = [];
+  const addTag = (tag: string) => {
+    if (!tags.includes(tag)) {
+      tags.push(tag);
+    }
+  };
+
+  if (/ai|人工智能|claude|gpt|gemini|agent|harness|code|prompt/.test(text)) {
+    addTag("AI");
+  }
+  if (/产品|创业|app|获客|商业|赚钱|lenny|增长/.test(text)) {
+    addTag("产品");
+  }
+  if (/社区|cmi|清迈|活动|聚会|工作坊|分享会|jam/.test(text)) {
+    addTag("社区");
+  }
+  if (/音乐|戏剧|美声|咏春|武术|身体|身心/.test(text)) {
+    addTag("身心");
+  }
+  if (/视频|mv|电影|影像/.test(text) || item.sourceType === "wechat_video") {
+    addTag("视频");
+  }
+  if (/塔罗|占卜|游戏|玩/.test(text)) {
+    addTag("娱乐");
+  }
+
+  return tags.length ? tags.slice(0, 3) : [sourceLabel[item.sourceType]];
+}
+
+function contentSourceText(item: ContentItem) {
+  return item.sourceName || sourceLabel[item.sourceType];
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -361,6 +399,8 @@ function ContentCard({
   viewMode: ViewMode;
   onOpen: (item: ContentItem) => void;
 }) {
+  const tags = contentTags(item);
+
   return (
     <button
       className={`content-card ${viewMode}`}
@@ -381,18 +421,15 @@ function ContentCard({
             {item.title}
           </h2>
           <p
+            className="card-tags"
             data-annotation-target={contentTargetId("content-saved-date", item)}
-            data-annotation-label={`保存日期：${item.title}`}
+            data-annotation-label={`标签：${item.title}`}
           >
-            {item.savedAt}
+            {tags.map((tag) => (
+              <span key={tag}>{tag}</span>
+            ))}
           </p>
         </div>
-        <MoreHorizontal
-          size={22}
-          strokeWidth={2.6}
-          data-annotation-target={contentTargetId("content-card-more", item)}
-          data-annotation-label={`卡片更多按钮：${item.title}`}
-        />
       </div>
       <PreviewArtwork item={item} />
       <div
@@ -404,13 +441,13 @@ function ContentCard({
           data-annotation-target={contentTargetId("content-source", item)}
           data-annotation-label={`内容来源：${item.title}`}
         >
-          {sourceLabel[item.sourceType]}
+          {contentSourceText(item)}
         </span>
         <span
           data-annotation-target={contentTargetId("content-duration", item)}
-          data-annotation-label={`阅读时长：${item.title}`}
+          data-annotation-label={`同步日期：${item.title}`}
         >
-          {item.estimatedMinutes} 分钟
+          {item.savedAt}
         </span>
       </div>
     </button>
@@ -560,7 +597,6 @@ function ReaderView({
 function ContentHome({
   items,
   isLoading,
-  loadError,
   query,
   sourceFilter,
   viewMode,
@@ -568,11 +604,9 @@ function ContentHome({
   onCycleSourceFilter,
   onViewModeChange,
   onOpenItem,
-  onOpenProfile,
 }: {
   items: ContentItem[];
   isLoading: boolean;
-  loadError: string;
   query: string;
   sourceFilter: SourceFilter;
   viewMode: ViewMode;
@@ -580,7 +614,6 @@ function ContentHome({
   onCycleSourceFilter: () => void;
   onViewModeChange: (mode: ViewMode) => void;
   onOpenItem: (item: ContentItem) => void;
-  onOpenProfile: () => void;
 }) {
   return (
     <section
@@ -594,12 +627,9 @@ function ContentHome({
         data-annotation-label="内容页标题区"
       >
         <div>
-          <p>WorthyScroll</p>
-          <h1>值得刷</h1>
+          <h1>刷点好的</h1>
+          <p>by Ziyang</p>
         </div>
-        <button aria-label="打开我的" onClick={onOpenProfile}>
-          <MoreHorizontal size={28} strokeWidth={2.5} />
-        </button>
       </header>
 
       <label className="search-box" data-annotation-target="content-search" data-annotation-label="搜索框">
@@ -635,15 +665,6 @@ function ContentHome({
             <Grid2X2 size={22} />
           </button>
         </div>
-      </div>
-
-      <div className="content-summary" data-annotation-target="content-summary" data-annotation-label="内容数量说明">
-        <strong data-annotation-target="content-summary-count" data-annotation-label="内容数量">
-          {isLoading ? "整理中" : `${items.length} 条内容`}
-        </strong>
-        <span data-annotation-target="content-summary-description" data-annotation-label="内容页说明文案">
-          {loadError || "把保存过的内容整理成可读内容流"}
-        </span>
       </div>
 
       <section className={`content-grid ${viewMode}`} data-annotation-target="content-grid" data-annotation-label="内容卡片列表">
@@ -1126,7 +1147,7 @@ export function App() {
   const [loadError, setLoadError] = useState("");
   const [query, setQuery] = useState("");
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [activeTab, setActiveTab] = useState<AppTab>("content");
   const [readerItem, setReaderItem] = useState<ContentItem | null>(null);
   const [likedIds, setLikedIds] = useState<Set<string>>(() => loadIdSet(LIKED_IDS_KEY));
@@ -1544,7 +1565,6 @@ export function App() {
                   <ContentHome
                     items={filteredItems}
                     isLoading={isLoading}
-                    loadError={loadError}
                     query={query}
                     sourceFilter={sourceFilter}
                     viewMode={viewMode}
@@ -1552,7 +1572,6 @@ export function App() {
                     onCycleSourceFilter={cycleSourceFilter}
                     onViewModeChange={setViewMode}
                     onOpenItem={setReaderItem}
-                    onOpenProfile={() => handleTabChange("profile")}
                   />
                 ) : activeTab === "blocking" ? (
                   <BlockingView
