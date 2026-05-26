@@ -18,3 +18,4 @@
 - `shield-interventions.md`：Shield 拦截页、摩擦、临时解锁、中途再拦。
 - `push-feedback.md`：推送、提醒、阅读反馈和推荐信号。
 - `release-readiness.md`：Xcode 工程生成、真机验证、权限申请和发布准备。
+- `web-prototype.md`：浏览器原型、可点交互和批注协作工具。

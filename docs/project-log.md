@@ -1,6 +1,6 @@
 # WorthyScroll 项目日志
 
-最后更新：2026-05-25  
+最后更新：2026-05-26
 当前阶段：原生 iOS MVP 启动  
 主仓库：https://github.com/skyrim0624/worthyscroll
 
@@ -38,6 +38,7 @@ WorthyScroll 第一版不是单纯的阅读器，也不是单纯的 App Blocker�
 - `supabase/**`：数据库迁移、RLS、seed。
 - `src/**`：Web 原型，只作为交互和数据导入验证环境。
 - `docs/workstreams/**`：每个功能块自己的进度日志。
+- `docs/workstreams/web-prototype.md`：Web 原型和批注协作工具进度。
 
 如果某一步必须跨块修改，先在提交说明里写清楚原因，并把接口变更同步到相关功能块日志。
 
@@ -54,6 +55,7 @@ WorthyScroll 第一版不是单纯的阅读器，也不是单纯的 App Blocker�
 - [x] P8 临时解锁、到点恢复和中途再拦
 - [x] P9 推送、提醒、阅读反馈
 - [ ] P10 真机验证、权限申请和发布准备
+- [x] Web 原型批注工具支持组件锚点
 
 ## 当前阻塞
 

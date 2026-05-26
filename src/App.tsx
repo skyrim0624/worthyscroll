@@ -23,7 +23,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { MouseEvent } from "react";
+import type { MouseEvent, RefObject, WheelEvent } from "react";
 import { ContentItem, contentItems } from "./content-items";
 
 type ViewMode = "grid" | "list";
@@ -42,12 +42,33 @@ type Annotation = {
   text: string;
   viewLabel: string;
   createdAt: string;
+  targetId?: string;
+  targetLabel?: string;
+  targetOffsetX?: number;
+  targetOffsetY?: number;
+  viewKey?: string;
 };
 type AnnotationDraft = {
   id?: string;
   x: number;
   y: number;
   text: string;
+  targetId?: string;
+  targetLabel?: string;
+  targetOffsetX?: number;
+  targetOffsetY?: number;
+  viewKey?: string;
+  viewLabel?: string;
+};
+type AnnotationPoint = {
+  left: number;
+  top: number;
+  targetRect?: {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  };
 };
 
 const sourceLabel: Record<ContentItem["sourceType"], string> = {
@@ -58,6 +79,7 @@ const sourceLabel: Record<ContentItem["sourceType"], string> = {
 };
 
 const ANNOTATION_STORAGE_KEY = "worthyscroll-annotations";
+const ANNOTATION_TARGET_SELECTOR = "[data-annotation-target]";
 const READ_IDS_KEY = "shortvideo-read-ids";
 const LIKED_IDS_KEY = "worthyscroll-liked-ids";
 const DISLIKED_IDS_KEY = "worthyscroll-disliked-ids";
@@ -148,6 +170,37 @@ function createAnnotationId() {
   return `annotation-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+function safeAnnotationId(value: string) {
+  return value.replace(/[^a-zA-Z0-9_-]/g, "-");
+}
+
+function contentTargetId(prefix: string, item: ContentItem) {
+  return `${prefix}-${safeAnnotationId(item.id)}`;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function findAnnotationTargetElement(element: Element | null, root: HTMLElement | null) {
+  if (!element || !root) {
+    return null;
+  }
+  const target = element.closest<HTMLElement>(ANNOTATION_TARGET_SELECTOR);
+  return target && root.contains(target) ? target : null;
+}
+
+function findAnnotationTargetById(root: HTMLElement | null, targetId?: string) {
+  if (!root || !targetId) {
+    return null;
+  }
+  return (
+    Array.from(root.querySelectorAll<HTMLElement>(ANNOTATION_TARGET_SELECTOR)).find(
+      (element) => element.dataset.annotationTarget === targetId,
+    ) || null
+  );
+}
+
 function loadAnnotations(): Annotation[] {
   try {
     const parsed = JSON.parse(localStorage.getItem(ANNOTATION_STORAGE_KEY) || "[]");
@@ -181,7 +234,8 @@ function formatAnnotationsForCodex(annotations: Annotation[]) {
     ...annotations.flatMap((annotation, index) => [
       `## ${index + 1}. ${annotation.viewLabel}`,
       "",
-      `- 位置：x=${annotation.x.toFixed(1)}%, y=${annotation.y.toFixed(1)}%`,
+      `- 组件：${annotation.targetLabel || "旧版坐标批注"}`,
+      `- 位置：x=${(annotation.targetOffsetX ?? annotation.x).toFixed(1)}%, y=${(annotation.targetOffsetY ?? annotation.y).toFixed(1)}%`,
       `- 内容：${annotation.text}`,
       "",
     ]),
@@ -210,9 +264,16 @@ function PhoneStatusBar() {
 }
 
 function PreviewArtwork({ item }: { item: ContentItem }) {
+  const annotationTargetId = contentTargetId("content-preview", item);
+  const annotationLabel = `封面：${item.title}`;
+
   if (item.visual === "note") {
     return (
-      <div className="preview note-preview">
+      <div
+        className="preview note-preview"
+        data-annotation-target={annotationTargetId}
+        data-annotation-label={annotationLabel}
+      >
         <div className="note-card rear" />
         <div className="note-card front">
           <span>读后再想</span>
@@ -226,7 +287,11 @@ function PreviewArtwork({ item }: { item: ContentItem }) {
 
   if (item.visual === "poster") {
     return (
-      <div className="preview poster-preview">
+      <div
+        className="preview poster-preview"
+        data-annotation-target={annotationTargetId}
+        data-annotation-label={annotationLabel}
+      >
         <div className="poster-couch" />
         <div className="poster-line" />
         <strong>CMI</strong>
@@ -237,7 +302,11 @@ function PreviewArtwork({ item }: { item: ContentItem }) {
 
   if (item.visual === "video") {
     return (
-      <div className="preview video-preview">
+      <div
+        className="preview video-preview"
+        data-annotation-target={annotationTargetId}
+        data-annotation-label={annotationLabel}
+      >
         <div className="video-strip strip-one" />
         <div className="video-strip strip-two" />
         <div className="play-mark">▶</div>
@@ -248,7 +317,11 @@ function PreviewArtwork({ item }: { item: ContentItem }) {
 
   if (item.visual === "stack") {
     return (
-      <div className="preview stack-preview">
+      <div
+        className="preview stack-preview"
+        data-annotation-target={annotationTargetId}
+        data-annotation-label={annotationLabel}
+      >
         <div className="small-paper one" />
         <div className="small-paper two" />
         <div className="small-paper three" />
@@ -258,7 +331,11 @@ function PreviewArtwork({ item }: { item: ContentItem }) {
   }
 
   return (
-    <div className="preview document-preview">
+    <div
+      className="preview document-preview"
+      data-annotation-target={annotationTargetId}
+      data-annotation-label={annotationLabel}
+    >
       <div className="paper ghost" />
       <div className="paper main">
         <span />
@@ -281,8 +358,17 @@ function ContentCard({
   onOpen: (item: ContentItem) => void;
 }) {
   return (
-    <button className={`content-card ${viewMode}`} onClick={() => onOpen(item)}>
-      <div className="card-header">
+    <button
+      className={`content-card ${viewMode}`}
+      onClick={() => onOpen(item)}
+      data-annotation-target={contentTargetId("content-card", item)}
+      data-annotation-label={`内容卡片：${item.title}`}
+    >
+      <div
+        className="card-header"
+        data-annotation-target={contentTargetId("content-title", item)}
+        data-annotation-label={`标题：${item.title}`}
+      >
         <div>
           <h2>{item.title}</h2>
           <p>{item.savedAt}</p>
@@ -290,7 +376,11 @@ function ContentCard({
         <MoreHorizontal size={22} strokeWidth={2.6} />
       </div>
       <PreviewArtwork item={item} />
-      <div className="card-meta">
+      <div
+        className="card-meta"
+        data-annotation-target={contentTargetId("content-meta", item)}
+        data-annotation-label={`来源和时间：${item.title}`}
+      >
         <span>{sourceLabel[item.sourceType]}</span>
         <span>{item.estimatedMinutes} 分钟</span>
       </div>
@@ -316,8 +406,16 @@ function ReaderView({
   const blocks = useMemo(() => parseReaderBlocks(item), [item]);
 
   return (
-    <article className="reader-view">
-      <header className="reader-nav">
+    <article
+      className="reader-view"
+      data-annotation-target={contentTargetId("reader-page", item)}
+      data-annotation-label={`阅读页：${item.title}`}
+    >
+      <header
+        className="reader-nav"
+        data-annotation-target={contentTargetId("reader-nav", item)}
+        data-annotation-label="阅读页顶部导航"
+      >
         <button onClick={onClose} aria-label="返回内容页">
           <ArrowLeft size={25} strokeWidth={2.4} />
         </button>
@@ -327,21 +425,38 @@ function ReaderView({
         </button>
       </header>
 
-      <div className="reader-meta">
+      <div
+        className="reader-meta"
+        data-annotation-target={contentTargetId("reader-meta", item)}
+        data-annotation-label={`阅读信息：${item.title}`}
+      >
         <span>{sourceLabel[item.sourceType]}</span>
         <span>{item.savedAt}</span>
         <span>{item.estimatedMinutes} 分钟</span>
       </div>
 
-      <h1>{item.title}</h1>
+      <h1
+        data-annotation-target={contentTargetId("reader-title", item)}
+        data-annotation-label={`阅读标题：${item.title}`}
+      >
+        {item.title}
+      </h1>
 
       {item.author || item.sourceName ? (
-        <p className="reader-byline">
+        <p
+          className="reader-byline"
+          data-annotation-target={contentTargetId("reader-byline", item)}
+          data-annotation-label={`作者来源：${item.title}`}
+        >
           {[item.sourceName, item.author].filter(Boolean).join(" · ")}
         </p>
       ) : null}
 
-      <div className="reader-actions-bar">
+      <div
+        className="reader-actions-bar"
+        data-annotation-target={contentTargetId("reader-actions", item)}
+        data-annotation-label="阅读反馈按钮组"
+      >
         <button
           className={feedbackSignal === "liked" ? "active" : ""}
           onClick={() => onSignal(item, "liked")}
@@ -365,23 +480,48 @@ function ReaderView({
       <div className="reader-content">
         {blocks.map((block, index) => {
           if (block.type === "heading") {
-            return <h2 key={`${block.type}-${index}`}>{block.text}</h2>;
+            return (
+              <h2
+                key={`${block.type}-${index}`}
+                data-annotation-target={contentTargetId(`reader-heading-${index}`, item)}
+                data-annotation-label={`小标题：${block.text}`}
+              >
+                {block.text}
+              </h2>
+            );
           }
           if (block.type === "section") {
             return (
-              <div className="reader-section-marker" key={`${block.type}-${index}`}>
+              <div
+                className="reader-section-marker"
+                key={`${block.type}-${index}`}
+                data-annotation-target={contentTargetId(`reader-section-${index}`, item)}
+                data-annotation-label={`段落编号：${block.text}`}
+              >
                 {block.text}
               </div>
             );
           }
           if (block.type === "image") {
             return (
-              <figure key={`${block.type}-${index}`}>
+              <figure
+                key={`${block.type}-${index}`}
+                data-annotation-target={contentTargetId(`reader-image-${index}`, item)}
+                data-annotation-label={`阅读图片：${block.alt}`}
+              >
                 <img src={block.src} alt={block.alt} loading="lazy" />
               </figure>
             );
           }
-          return <p key={`${block.type}-${index}`}>{block.text}</p>;
+          return (
+            <p
+              key={`${block.type}-${index}`}
+              data-annotation-target={contentTargetId(`reader-paragraph-${index}`, item)}
+              data-annotation-label={`正文段落 ${index + 1}`}
+            >
+              {block.text}
+            </p>
+          );
         })}
       </div>
     </article>
@@ -414,8 +554,16 @@ function ContentHome({
   onOpenProfile: () => void;
 }) {
   return (
-    <section className="app-page content-page">
-      <header className="brand-header">
+    <section
+      className="app-page content-page"
+      data-annotation-target="content-page"
+      data-annotation-label="内容页"
+    >
+      <header
+        className="brand-header"
+        data-annotation-target="content-header"
+        data-annotation-label="内容页标题区"
+      >
         <div>
           <p>WorthyScroll</p>
           <h1>值得刷</h1>
@@ -425,7 +573,7 @@ function ContentHome({
         </button>
       </header>
 
-      <label className="search-box">
+      <label className="search-box" data-annotation-target="content-search" data-annotation-label="搜索框">
         <Search size={24} strokeWidth={2.4} />
         <input
           value={query}
@@ -434,7 +582,7 @@ function ContentHome({
         />
       </label>
 
-      <div className="filter-bar">
+      <div className="filter-bar" data-annotation-target="content-filter-bar" data-annotation-label="筛选和视图切换">
         <button
           className={sourceFilter === "all" ? "active-filter" : ""}
           onClick={onCycleSourceFilter}
@@ -460,12 +608,12 @@ function ContentHome({
         </div>
       </div>
 
-      <div className="content-summary">
+      <div className="content-summary" data-annotation-target="content-summary" data-annotation-label="内容数量说明">
         <strong>{isLoading ? "整理中" : `${items.length} 条内容`}</strong>
         <span>{loadError || "把保存过的内容整理成可读内容流"}</span>
       </div>
 
-      <section className={`content-grid ${viewMode}`}>
+      <section className={`content-grid ${viewMode}`} data-annotation-target="content-grid" data-annotation-label="内容卡片列表">
         {items.map((item) => (
           <ContentCard key={item.id} item={item} viewMode={viewMode} onOpen={onOpenItem} />
         ))}
@@ -501,13 +649,17 @@ function BlockingView({
   ];
 
   return (
-    <section className="app-page blocking-page">
-      <header className="section-header">
+    <section className="app-page blocking-page" data-annotation-target="blocking-page" data-annotation-label="屏蔽页">
+      <header className="section-header" data-annotation-target="blocking-header" data-annotation-label="屏蔽页标题区">
         <p>防沉迷</p>
         <h1>把低质量入口挡住</h1>
       </header>
 
-      <div className={blockActive ? "block-status active" : "block-status"}>
+      <div
+        className={blockActive ? "block-status active" : "block-status"}
+        data-annotation-target="blocking-status"
+        data-annotation-label="屏蔽状态卡片"
+      >
         <Shield size={24} />
         <div>
           <strong>{blockActive ? "屏蔽中" : "未开启"}</strong>
@@ -523,6 +675,8 @@ function BlockingView({
               key={target.id}
               className={selected ? "target-row selected" : "target-row"}
               onClick={() => onToggleTarget(target.id)}
+              data-annotation-target={`blocking-target-${target.id}`}
+              data-annotation-label={`屏蔽目标：${target.name}`}
             >
               <span>
                 <b>{target.name}</b>
@@ -538,6 +692,8 @@ function BlockingView({
         className={blockActive ? "block-action active" : "block-action"}
         onClick={onToggleBlock}
         disabled={selectedTargets.size === 0}
+        data-annotation-target="blocking-action"
+        data-annotation-label="开始或结束屏蔽按钮"
       >
         <Hand size={18} />
         {blockActive ? "结束本次屏蔽" : "开始屏蔽"}
@@ -564,13 +720,13 @@ function ProfileView({
   onToggleReminder: () => void;
 }) {
   return (
-    <section className="app-page profile-page">
-      <header className="section-header">
+    <section className="app-page profile-page" data-annotation-target="profile-page" data-annotation-label="我的页">
+      <header className="section-header" data-annotation-target="profile-header" data-annotation-label="我的页标题区">
         <p>我的</p>
         <h1>阅读记录</h1>
       </header>
 
-      <div className="stats-grid">
+      <div className="stats-grid" data-annotation-target="profile-stats" data-annotation-label="阅读统计">
         <div>
           <strong>{readCount}</strong>
           <span>已读</span>
@@ -585,17 +741,17 @@ function ProfileView({
         </div>
       </div>
 
-      <div className="settings-list">
-        <button onClick={onToggleReminder}>
+      <div className="settings-list" data-annotation-target="profile-settings" data-annotation-label="设置列表">
+        <button onClick={onToggleReminder} data-annotation-target="profile-reminder" data-annotation-label="每日提醒开关">
           <Bell size={18} />
           <span>每天提醒我读一点</span>
           <i>{reminderEnabled ? "开" : "关"}</i>
         </button>
-        <button onClick={onResetReading}>
+        <button onClick={onResetReading} data-annotation-target="profile-reset-reading" data-annotation-label="恢复已读内容按钮">
           <RotateCcw size={18} />
           <span>恢复已读内容</span>
         </button>
-        <button onClick={onResetFeedback}>
+        <button onClick={onResetFeedback} data-annotation-target="profile-reset-feedback" data-annotation-label="清空喜好反馈按钮">
           <Trash2 size={18} />
           <span>清空喜好反馈</span>
         </button>
@@ -618,7 +774,7 @@ function BottomTabBar({
   ];
 
   return (
-    <nav className="bottom-tab-bar" aria-label="主导航">
+    <nav className="bottom-tab-bar" aria-label="主导航" data-annotation-target="bottom-tabs" data-annotation-label="底部导航栏">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         return (
@@ -626,6 +782,8 @@ function BottomTabBar({
             key={tab.id}
             className={activeTab === tab.id ? "active" : ""}
             onClick={() => onChange(tab.id)}
+            data-annotation-target={`bottom-tab-${tab.id}`}
+            data-annotation-label={`底部 Tab：${tab.label}`}
           >
             <Icon size={22} />
             <span>{tab.label}</span>
@@ -682,7 +840,7 @@ function AnnotationToolbar({
         <Trash2 size={17} />
         清空
       </button>
-      <p>{annotationMode ? "点预览里的任意位置，连续留下多条意见。" : "批注会保存在本机浏览器里。"}</p>
+      <p>{annotationMode ? "直接点 App 组件，批注会跟随组件滚动。" : "批注会保存在本机浏览器里。"}</p>
     </aside>
   );
 }
@@ -716,7 +874,10 @@ function AnnotationPanel({
             >
               <button onClick={() => onEdit(annotation)}>
                 <span>{index + 1}</span>
-                <small>{annotation.viewLabel}</small>
+                <small>
+                  {annotation.viewLabel}
+                  {annotation.targetLabel ? ` · ${annotation.targetLabel}` : ""}
+                </small>
                 <b>{annotation.text}</b>
               </button>
               <button onClick={() => onDelete(annotation.id)} aria-label={`删除批注 ${index + 1}`}>
@@ -736,6 +897,11 @@ function AnnotationLayer({
   annotationMode,
   showAnnotations,
   activeAnnotationId,
+  screenRef,
+  scrollContainerRef,
+  viewKey,
+  currentViewLabel,
+  layoutVersion,
   onCreateDraft,
   onEdit,
   onDraftTextChange,
@@ -748,50 +914,159 @@ function AnnotationLayer({
   annotationMode: boolean;
   showAnnotations: boolean;
   activeAnnotationId: string | null;
-  onCreateDraft: (x: number, y: number) => void;
+  screenRef: RefObject<HTMLDivElement | null>;
+  scrollContainerRef: RefObject<HTMLDivElement | null>;
+  viewKey: string;
+  currentViewLabel: string;
+  layoutVersion: number;
+  onCreateDraft: (draft: AnnotationDraft) => void;
   onEdit: (annotation: Annotation) => void;
   onDraftTextChange: (text: string) => void;
   onSaveDraft: () => void;
   onCancelDraft: () => void;
   onDeleteDraft: () => void;
 }) {
-  const visibleAnnotations = showAnnotations ? annotations : [];
-  const draftStyle = draft
-    ? {
-        left: `${Math.min(draft.x, 66)}%`,
-        top: `${Math.min(draft.y, 78)}%`,
-      }
-    : undefined;
+  void layoutVersion;
 
-  function handleLayerClick(event: MouseEvent<HTMLButtonElement>) {
-    const rect = event.currentTarget.getBoundingClientRect();
-    onCreateDraft(
-      ((event.clientX - rect.left) / rect.width) * 100,
-      ((event.clientY - rect.top) / rect.height) * 100,
-    );
+  function getAnnotationPoint(annotation: Annotation | AnnotationDraft): AnnotationPoint | null {
+    const screenElement = screenRef.current;
+    if (!screenElement) {
+      return null;
+    }
+
+    const screenRect = screenElement.getBoundingClientRect();
+    const target = findAnnotationTargetById(screenElement, annotation.targetId);
+    if (target) {
+      const targetRect = target.getBoundingClientRect();
+      return {
+        left: targetRect.left - screenRect.left + targetRect.width * ((annotation.targetOffsetX ?? 50) / 100),
+        top: targetRect.top - screenRect.top + targetRect.height * ((annotation.targetOffsetY ?? 50) / 100),
+        targetRect: {
+          left: targetRect.left - screenRect.left,
+          top: targetRect.top - screenRect.top,
+          width: targetRect.width,
+          height: targetRect.height,
+        },
+      };
+    }
+
+    return {
+      left: screenRect.width * (annotation.x / 100),
+      top: screenRect.height * (annotation.y / 100),
+    };
   }
+
+  function getPopoverStyle(annotation: AnnotationDraft) {
+    const screenElement = screenRef.current;
+    const point = getAnnotationPoint(annotation);
+    if (!screenElement || !point) {
+      return undefined;
+    }
+    const screenRect = screenElement.getBoundingClientRect();
+    return {
+      left: `${clamp(point.left + 18, 14, Math.max(14, screenRect.width - 276))}px`,
+      top: `${clamp(point.top - 34, 14, Math.max(14, screenRect.height - 156))}px`,
+    };
+  }
+
+  function handleLayerClick(event: MouseEvent<HTMLDivElement>) {
+    if ((event.target as HTMLElement).closest(".annotation-pin, .annotation-popover")) {
+      return;
+    }
+
+    const screenElement = screenRef.current;
+    if (!screenElement) {
+      return;
+    }
+
+    event.currentTarget.style.pointerEvents = "none";
+    const elementAtPoint = document.elementFromPoint(event.clientX, event.clientY);
+    event.currentTarget.style.pointerEvents = "";
+
+    const target = findAnnotationTargetElement(elementAtPoint, screenElement);
+    const screenRect = screenElement.getBoundingClientRect();
+    const targetRect = target?.getBoundingClientRect();
+    const fallbackX = ((event.clientX - screenRect.left) / screenRect.width) * 100;
+    const fallbackY = ((event.clientY - screenRect.top) / screenRect.height) * 100;
+
+    onCreateDraft({
+      x: fallbackX,
+      y: fallbackY,
+      text: "",
+      targetId: target?.dataset.annotationTarget,
+      targetLabel: target?.dataset.annotationLabel || currentViewLabel,
+      targetOffsetX: targetRect ? ((event.clientX - targetRect.left) / targetRect.width) * 100 : undefined,
+      targetOffsetY: targetRect ? ((event.clientY - targetRect.top) / targetRect.height) * 100 : undefined,
+      viewKey,
+      viewLabel: currentViewLabel,
+    });
+  }
+
+  function handleLayerWheel(event: WheelEvent<HTMLDivElement>) {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) {
+      return;
+    }
+    event.preventDefault();
+    scrollContainer.scrollBy({
+      left: event.deltaX,
+      top: event.deltaY,
+      behavior: "auto",
+    });
+  }
+
+  const visibleAnnotations = showAnnotations
+    ? annotations.filter((annotation) => annotation.targetId && annotation.viewKey === viewKey)
+    : [];
+  const activeAnnotation = visibleAnnotations.find((annotation) => annotation.id === activeAnnotationId);
+  const activeTargetFrame = draft
+    ? getAnnotationPoint(draft)?.targetRect
+    : activeAnnotation
+      ? getAnnotationPoint(activeAnnotation)?.targetRect
+      : undefined;
+  const draftStyle = draft ? getPopoverStyle(draft) : undefined;
 
   return (
     <div className={annotationMode ? "annotation-layer enabled" : "annotation-layer"}>
-      {annotationMode ? (
-        <button
-          className="annotation-hit-area"
-          aria-label="添加批注"
-          onClick={handleLayerClick}
+      {activeTargetFrame ? (
+        <div
+          className="annotation-target-frame"
+          style={{
+            left: `${activeTargetFrame.left}px`,
+            top: `${activeTargetFrame.top}px`,
+            width: `${activeTargetFrame.width}px`,
+            height: `${activeTargetFrame.height}px`,
+          }}
         />
       ) : null}
 
-      {visibleAnnotations.map((annotation, index) => (
-        <button
-          key={annotation.id}
-          className={activeAnnotationId === annotation.id ? "annotation-pin active" : "annotation-pin"}
-          style={{ left: `${annotation.x}%`, top: `${annotation.y}%` }}
-          onClick={() => onEdit(annotation)}
-          aria-label={`编辑批注 ${index + 1}`}
-        >
-          {index + 1}
-        </button>
-      ))}
+      {annotationMode ? (
+        <div
+          className="annotation-hit-area"
+          aria-label="添加批注"
+          onClick={handleLayerClick}
+          onWheel={handleLayerWheel}
+        />
+      ) : null}
+
+      {visibleAnnotations.map((annotation) => {
+        const annotationNumber = annotations.findIndex((item) => item.id === annotation.id) + 1;
+        const annotationPoint = getAnnotationPoint(annotation);
+        return (
+          <button
+            key={annotation.id}
+            className={activeAnnotationId === annotation.id ? "annotation-pin active" : "annotation-pin"}
+            style={{
+              left: `${annotationPoint?.left ?? -999}px`,
+              top: `${annotationPoint?.top ?? -999}px`,
+            }}
+            onClick={() => onEdit(annotation)}
+            aria-label={`编辑批注 ${annotationNumber}`}
+          >
+            {annotationNumber}
+          </button>
+        );
+      })}
 
       {draft ? (
         <form
@@ -832,6 +1107,7 @@ function AnnotationLayer({
 
 export function App() {
   const screenRef = useRef<HTMLDivElement>(null);
+  const appScreenRef = useRef<HTMLDivElement>(null);
   const [items, setItems] = useState<ContentItem[]>(contentItems);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -857,6 +1133,7 @@ export function App() {
   const [annotations, setAnnotations] = useState<Annotation[]>(loadAnnotations);
   const [annotationDraft, setAnnotationDraft] = useState<AnnotationDraft | null>(null);
   const [activeAnnotationId, setActiveAnnotationId] = useState<string | null>(null);
+  const [annotationLayoutVersion, setAnnotationLayoutVersion] = useState(0);
   const [copiedAnnotations, setCopiedAnnotations] = useState(false);
   const [readIds, setReadIds] = useState<Set<string>>(() => loadIdSet(READ_IDS_KEY));
 
@@ -880,6 +1157,16 @@ export function App() {
     localStorage.setItem(ANNOTATION_STORAGE_KEY, JSON.stringify(annotations));
   }, [annotations]);
 
+  useEffect(() => {
+    function updateAnnotationLayout() {
+      setAnnotationLayoutVersion((currentVersion) => currentVersion + 1);
+    }
+
+    window.addEventListener("resize", updateAnnotationLayout);
+    return () => window.removeEventListener("resize", updateAnnotationLayout);
+  }, []);
+
+  const currentViewKey = readerItem ? `reader:${safeAnnotationId(readerItem.id)}` : activeTab;
   const currentViewLabel = readerItem
     ? `阅读页：${readerItem.title}`
     : activeTab === "blocking"
@@ -966,6 +1253,7 @@ export function App() {
   function handleTabChange(tab: AppTab) {
     setReaderItem(null);
     setActiveTab(tab);
+    setAnnotationDraft(null);
     window.setTimeout(() => screenRef.current?.scrollTo({ top: 0, behavior: "smooth" }), 0);
   }
 
@@ -1015,10 +1303,10 @@ export function App() {
     });
   }
 
-  function createAnnotationDraft(x: number, y: number) {
+  function createAnnotationDraft(draft: AnnotationDraft) {
     setCopiedAnnotations(false);
     setActiveAnnotationId(null);
-    setAnnotationDraft({ x, y, text: "" });
+    setAnnotationDraft(draft);
   }
 
   function editAnnotation(annotation: Annotation) {
@@ -1030,6 +1318,12 @@ export function App() {
       x: annotation.x,
       y: annotation.y,
       text: annotation.text,
+      targetId: annotation.targetId,
+      targetLabel: annotation.targetLabel,
+      targetOffsetX: annotation.targetOffsetX,
+      targetOffsetY: annotation.targetOffsetY,
+      viewKey: annotation.viewKey,
+      viewLabel: annotation.viewLabel,
     });
   }
 
@@ -1058,8 +1352,13 @@ export function App() {
         x: annotationDraft.x,
         y: annotationDraft.y,
         text,
-        viewLabel: currentViewLabel,
+        viewLabel: annotationDraft.viewLabel || currentViewLabel,
         createdAt: new Date().toISOString(),
+        targetId: annotationDraft.targetId,
+        targetLabel: annotationDraft.targetLabel,
+        targetOffsetX: annotationDraft.targetOffsetX,
+        targetOffsetY: annotationDraft.targetOffsetY,
+        viewKey: annotationDraft.viewKey || currentViewKey,
       };
       setAnnotations((currentAnnotations) => [...currentAnnotations, annotation]);
       setActiveAnnotationId(annotation.id);
@@ -1136,10 +1435,16 @@ export function App() {
       <div className="prototype-workbench">
         <div className="preview-surface">
           <div className="phone-shell">
-            <div className="app-screen">
+            <div className="app-screen" ref={appScreenRef}>
               <PhoneStatusBar />
 
-              <div className="app-viewport" ref={screenRef}>
+              <div
+                className="app-viewport"
+                ref={screenRef}
+                onScroll={() =>
+                  setAnnotationLayoutVersion((currentVersion) => currentVersion + 1)
+                }
+              >
                 {readerItem ? (
                   <ReaderView
                     item={readerItem}
@@ -1186,30 +1491,35 @@ export function App() {
               {!readerItem ? (
                 <BottomTabBar activeTab={activeTab} onChange={handleTabChange} />
               ) : null}
+
+              <AnnotationLayer
+                annotations={annotations}
+                draft={annotationDraft}
+                annotationMode={annotationMode}
+                showAnnotations={showAnnotations}
+                activeAnnotationId={activeAnnotationId}
+                screenRef={appScreenRef}
+                scrollContainerRef={screenRef}
+                viewKey={currentViewKey}
+                currentViewLabel={currentViewLabel}
+                layoutVersion={annotationLayoutVersion}
+                onCreateDraft={createAnnotationDraft}
+                onEdit={editAnnotation}
+                onDraftTextChange={(text) =>
+                  setAnnotationDraft((currentDraft) =>
+                    currentDraft ? { ...currentDraft, text } : currentDraft,
+                  )
+                }
+                onSaveDraft={saveAnnotationDraft}
+                onCancelDraft={() => setAnnotationDraft(null)}
+                onDeleteDraft={() => {
+                  if (annotationDraft?.id) {
+                    deleteAnnotation(annotationDraft.id);
+                  }
+                }}
+              />
             </div>
           </div>
-
-          <AnnotationLayer
-            annotations={annotations}
-            draft={annotationDraft}
-            annotationMode={annotationMode}
-            showAnnotations={showAnnotations}
-            activeAnnotationId={activeAnnotationId}
-            onCreateDraft={createAnnotationDraft}
-            onEdit={editAnnotation}
-            onDraftTextChange={(text) =>
-              setAnnotationDraft((currentDraft) =>
-                currentDraft ? { ...currentDraft, text } : currentDraft,
-              )
-            }
-            onSaveDraft={saveAnnotationDraft}
-            onCancelDraft={() => setAnnotationDraft(null)}
-            onDeleteDraft={() => {
-              if (annotationDraft?.id) {
-                deleteAnnotation(annotationDraft.id);
-              }
-            }}
-          />
         </div>
 
         {showAnnotations ? (
