@@ -32,7 +32,7 @@
 
 ```bash
 sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
-cd /Users/andreas/vibe\ coding/shortvideo/ios
+cd ios
 xcodegen generate --spec project.yml
 xcodebuild -list -project WorthyScroll.xcodeproj
 ```
@@ -50,7 +50,7 @@ xcodebuild -list -project WorthyScroll.xcodeproj
 
 - 建议新项目名：`worthyscroll`
 - 建议区域：`ap-southeast-1`
-- 已知组织：`omuwwgbrsudtpzqsejmv`
+- Supabase 组织和费用需由项目维护者确认。
 - 需要迁移：
   - `20260525001842_init_worthyscroll_schema.sql`
   - `20260525014021_add_auth_uid_defaults.sql`

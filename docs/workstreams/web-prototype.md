@@ -36,4 +36,4 @@
 
 - Web 原型内容数据来自 `public/content-items.json`。
 - 组件锚点使用 `data-annotation-target` 和 `data-annotation-label`，后续新增可评审组件时应同步补齐。
-- 本地 skill 路径：`/Users/andreas/.codex/skills/ui-review`。
+- 本地 Codex skill 名称：`ui-review`。

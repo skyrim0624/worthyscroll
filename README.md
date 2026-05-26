@@ -1,4 +1,4 @@
-# 短视频防御系统
+# WorthyScroll
 
 当前阶段已经确认第一版 MVP 要转向 Xcode 原生 App：它不仅要做收藏 / 阅读 / 推送 / 站内阅读，还要实现类似 one sec 的系统级 App 屏蔽能力。
 
@@ -27,10 +27,17 @@ npm run dev -- --port 5174
 ## 当前管道
 
 1. 在微信里把想看的公众号文章或视频转发给「笔记同步助手」。
-2. NoteHelper 插件同步到 Obsidian：`/Users/andreas/cmi社区知识库/CMI/笔记同步助手/`。
+2. NoteHelper 插件同步到本机 Obsidian / Markdown 目录。
 3. 本项目脚本扫描同步目录，把独立文章 Markdown 导入 SQLite 数据库：`data/content-shelf.sqlite`。
 4. 脚本同时导出前端可读取的 JSON：`public/content-items.json`。
 5. App 首页读取这个 JSON，生成 WorthyScroll 内容流。
+
+默认导入目录是 `data/source-notes`，也可以用环境变量或命令行参数指定：
+
+```bash
+WORTHYSCROLL_SOURCE_ROOT=/path/to/notes python3 scripts/import-wechat-notes.py
+python3 scripts/import-wechat-notes.py --source-root /path/to/notes
+```
 
 ## Supabase 数据库
 
@@ -70,3 +77,7 @@ python3 scripts/import-wechat-notes.py
 ```
 
 脚本会跳过 `同步助手_YYYY-MM-DD.md` 这类日汇总文件，避免和独立文章重复。
+
+## 开源许可
+
+本项目使用 MIT License。仓库不包含个人未读库存、导出的本地数据库、公众号全文 JSON 或本地图片资产；这些文件默认由 `.gitignore` 排除。

@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import shutil
 import sqlite3
@@ -14,9 +15,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
-DEFAULT_SOURCE_ROOT = Path("/Users/andreas/cmi社区知识库/CMI/笔记同步助手")
-DEFAULT_DB_PATH = Path("/Users/andreas/vibe coding/shortvideo/data/content-shelf.sqlite")
-DEFAULT_EXPORT_PATH = Path("/Users/andreas/vibe coding/shortvideo/public/content-items.json")
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_SOURCE_ROOT = Path(os.environ.get("WORTHYSCROLL_SOURCE_ROOT", PROJECT_ROOT / "data/source-notes"))
+DEFAULT_DB_PATH = Path(os.environ.get("WORTHYSCROLL_DB_PATH", PROJECT_ROOT / "data/content-shelf.sqlite"))
+DEFAULT_EXPORT_PATH = Path(os.environ.get("WORTHYSCROLL_EXPORT_PATH", PROJECT_ROOT / "public/content-items.json"))
 AGGREGATE_FILE_PATTERN = re.compile(r"^同步助手_\d{4}-\d{2}-\d{2}\.md$")
 OBSIDIAN_IMAGE_PATTERN = re.compile(r"!\[\[([^\]|]+)(?:\|[^\]]+)?\]\]")
 MARKDOWN_IMAGE_PATTERN = re.compile(r"!\[([^\]]*)\]\(([^)]+)\)")

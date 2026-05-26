@@ -1,4 +1,9 @@
 {
+  "name": "worthyscroll",
+  "version": "0.1.0",
+  "description": "A worthy-scroll prototype for replacing short-video feeds with saved and intentional reading.",
+  "license": "MIT",
+  "private": false,
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",

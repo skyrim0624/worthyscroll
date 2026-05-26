@@ -14,7 +14,8 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 
-DEFAULT_EXPORT_PATH = Path("/Users/andreas/vibe coding/shortvideo/public/content-items.json")
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_EXPORT_PATH = Path(os.environ.get("WORTHYSCROLL_EXPORT_PATH", PROJECT_ROOT / "public/content-items.json"))
 BATCH_SIZE = 100
 
 
