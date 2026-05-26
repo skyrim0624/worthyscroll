@@ -2,6 +2,7 @@ import {
   Archive,
   ArrowLeft,
   Bell,
+  Bookmark,
   BookMarked,
   Check,
   ChevronDown,
@@ -27,7 +28,7 @@ import { ContentItem, contentItems } from "./content-items";
 
 type ViewMode = "grid" | "list";
 type SourceFilter = "all" | ContentItem["sourceType"];
-type AppTab = "content" | "blocking" | "profile";
+type AppTab = "content" | "favorites" | "blocking" | "profile";
 type FeedbackSignal = "liked" | "disliked";
 type ReaderBlock =
   | { type: "heading"; text: string }
@@ -86,6 +87,7 @@ const ANNOTATION_TARGET_SELECTOR = "[data-annotation-target]";
 const READ_IDS_KEY = "shortvideo-read-ids";
 const LIKED_IDS_KEY = "worthyscroll-liked-ids";
 const DISLIKED_IDS_KEY = "worthyscroll-disliked-ids";
+const FAVORITE_IDS_KEY = "worthyscroll-favorite-ids";
 const HIDDEN_IDS_KEY = "worthyscroll-hidden-ids";
 const BLOCK_TARGETS_KEY = "worthyscroll-block-targets";
 const BLOCK_ACTIVE_KEY = "worthyscroll-block-active";
@@ -393,64 +395,77 @@ function PreviewArtwork({ item }: { item: ContentItem }) {
 function ContentCard({
   item,
   viewMode,
+  isFavorite,
   onOpen,
+  onToggleFavorite,
 }: {
   item: ContentItem;
   viewMode: ViewMode;
+  isFavorite: boolean;
   onOpen: (item: ContentItem) => void;
+  onToggleFavorite: (item: ContentItem) => void;
 }) {
   const tags = contentTags(item);
 
   return (
-    <button
+    <article
       className={`content-card ${viewMode}`}
-      onClick={() => onOpen(item)}
       data-annotation-target={contentTargetId("content-card", item)}
       data-annotation-label={`内容卡片：${item.title}`}
     >
-      <div
-        className="card-header"
-        data-annotation-target={contentTargetId("content-title", item)}
-        data-annotation-label={`标题：${item.title}`}
+      <button
+        className="content-card-main"
+        onClick={() => onOpen(item)}
+        aria-label={`阅读：${item.title}`}
       >
-        <div>
-          <h2
-            data-annotation-target={contentTargetId("content-title-text", item)}
-            data-annotation-label={`标题文字：${item.title}`}
-          >
-            {item.title}
-          </h2>
-          <p
-            className="card-tags"
-            data-annotation-target={contentTargetId("content-saved-date", item)}
-            data-annotation-label={`标签：${item.title}`}
-          >
-            {tags.map((tag) => (
-              <span key={tag}>{tag}</span>
-            ))}
-          </p>
+        <div
+          className="card-header"
+          data-annotation-target={contentTargetId("content-title", item)}
+          data-annotation-label={`标题：${item.title}`}
+        >
+          <div>
+            <h2
+              data-annotation-target={contentTargetId("content-title-text", item)}
+              data-annotation-label={`标题文字：${item.title}`}
+            >
+              {item.title}
+            </h2>
+            <p
+              className="card-tags"
+              data-annotation-target={contentTargetId("content-saved-date", item)}
+              data-annotation-label={`标签：${item.title}`}
+            >
+              {tags.map((tag) => (
+                <span key={tag}>{tag}</span>
+              ))}
+            </p>
+          </div>
         </div>
-      </div>
-      <PreviewArtwork item={item} />
-      <div
-        className="card-meta"
-        data-annotation-target={contentTargetId("content-meta", item)}
-        data-annotation-label={`来源和时间：${item.title}`}
+        <PreviewArtwork item={item} />
+        <div
+          className="card-meta"
+          data-annotation-target={contentTargetId("content-meta", item)}
+          data-annotation-label={`来源和收藏：${item.title}`}
+        >
+          <span
+            data-annotation-target={contentTargetId("content-source", item)}
+            data-annotation-label={`内容来源：${item.title}`}
+          >
+            {contentSourceText(item)}
+          </span>
+        </div>
+      </button>
+
+      <button
+        className={isFavorite ? "favorite-button active" : "favorite-button"}
+        onClick={() => onToggleFavorite(item)}
+        aria-label={isFavorite ? `取消收藏：${item.title}` : `收藏：${item.title}`}
+        data-annotation-target={contentTargetId("content-favorite", item)}
+        data-annotation-label={`收藏按钮：${item.title}`}
       >
-        <span
-          data-annotation-target={contentTargetId("content-source", item)}
-          data-annotation-label={`内容来源：${item.title}`}
-        >
-          {contentSourceText(item)}
-        </span>
-        <span
-          data-annotation-target={contentTargetId("content-duration", item)}
-          data-annotation-label={`同步日期：${item.title}`}
-        >
-          {item.savedAt}
-        </span>
-      </div>
-    </button>
+        <Bookmark size={18} strokeWidth={2.5} fill={isFavorite ? "currentColor" : "none"} />
+      </button>
+    </article>
   );
 }
 
@@ -604,6 +619,8 @@ function ContentHome({
   onCycleSourceFilter,
   onViewModeChange,
   onOpenItem,
+  favoriteIds,
+  onToggleFavorite,
 }: {
   items: ContentItem[];
   isLoading: boolean;
@@ -614,6 +631,8 @@ function ContentHome({
   onCycleSourceFilter: () => void;
   onViewModeChange: (mode: ViewMode) => void;
   onOpenItem: (item: ContentItem) => void;
+  favoriteIds: Set<string>;
+  onToggleFavorite: (item: ContentItem) => void;
 }) {
   return (
     <section
@@ -669,7 +688,14 @@ function ContentHome({
 
       <section className={`content-grid ${viewMode}`} data-annotation-target="content-grid" data-annotation-label="内容卡片列表">
         {items.map((item) => (
-          <ContentCard key={item.id} item={item} viewMode={viewMode} onOpen={onOpenItem} />
+          <ContentCard
+            key={item.id}
+            item={item}
+            viewMode={viewMode}
+            isFavorite={favoriteIds.has(item.id)}
+            onOpen={onOpenItem}
+            onToggleFavorite={onToggleFavorite}
+          />
         ))}
       </section>
 
@@ -680,6 +706,88 @@ function ContentHome({
           <span>换个筛选或搜索词试试。</span>
         </div>
       ) : null}
+    </section>
+  );
+}
+
+function FavoritesHome({
+  items,
+  viewMode,
+  onViewModeChange,
+  onOpenItem,
+  favoriteIds,
+  onToggleFavorite,
+}: {
+  items: ContentItem[];
+  viewMode: ViewMode;
+  onViewModeChange: (mode: ViewMode) => void;
+  onOpenItem: (item: ContentItem) => void;
+  favoriteIds: Set<string>;
+  onToggleFavorite: (item: ContentItem) => void;
+}) {
+  return (
+    <section
+      className="app-page favorites-page"
+      data-annotation-target="favorites-page"
+      data-annotation-label="收藏页"
+    >
+      <header
+        className="section-header compact"
+        data-annotation-target="favorites-header"
+        data-annotation-label="收藏页标题区"
+      >
+        <h1>收藏</h1>
+        <p>留住想反复看的内容</p>
+      </header>
+
+      <div
+        className="filter-bar favorites-toolbar"
+        data-annotation-target="favorites-toolbar"
+        data-annotation-label="收藏页视图切换"
+      >
+        <span>{items.length} 条</span>
+        <div className="view-toggle" role="group" aria-label="收藏视图切换">
+          <button
+            className={viewMode === "list" ? "selected" : ""}
+            onClick={() => onViewModeChange("list")}
+            aria-label="列表视图"
+          >
+            <List size={22} />
+          </button>
+          <button
+            className={viewMode === "grid" ? "selected" : ""}
+            onClick={() => onViewModeChange("grid")}
+            aria-label="网格视图"
+          >
+            <Grid2X2 size={22} />
+          </button>
+        </div>
+      </div>
+
+      {items.length > 0 ? (
+        <section
+          className={`content-grid ${viewMode}`}
+          data-annotation-target="favorites-grid"
+          data-annotation-label="收藏内容列表"
+        >
+          {items.map((item) => (
+            <ContentCard
+              key={item.id}
+              item={item}
+              viewMode={viewMode}
+              isFavorite={favoriteIds.has(item.id)}
+              onOpen={onOpenItem}
+              onToggleFavorite={onToggleFavorite}
+            />
+          ))}
+        </section>
+      ) : (
+        <div className="empty-state">
+          <Bookmark size={28} />
+          <strong>还没有收藏</strong>
+          <span>点内容卡片右下角的收藏标，就会收进这里。</span>
+        </div>
+      )}
     </section>
   );
 }
@@ -823,6 +931,7 @@ function BottomTabBar({
 }) {
   const tabs: Array<{ id: AppTab; label: string; icon: typeof BookMarked }> = [
     { id: "content", label: "内容", icon: BookMarked },
+    { id: "favorites", label: "收藏", icon: Bookmark },
     { id: "blocking", label: "屏蔽", icon: Hand },
     { id: "profile", label: "我的", icon: Settings },
   ];
@@ -1152,6 +1261,7 @@ export function App() {
   const [readerItem, setReaderItem] = useState<ContentItem | null>(null);
   const [likedIds, setLikedIds] = useState<Set<string>>(() => loadIdSet(LIKED_IDS_KEY));
   const [dislikedIds, setDislikedIds] = useState<Set<string>>(() => loadIdSet(DISLIKED_IDS_KEY));
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(() => loadIdSet(FAVORITE_IDS_KEY));
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => loadIdSet(HIDDEN_IDS_KEY));
   const [selectedBlockTargets, setSelectedBlockTargets] = useState<Set<string>>(() =>
     loadIdSet(BLOCK_TARGETS_KEY),
@@ -1206,9 +1316,11 @@ export function App() {
     ? `阅读页：${readerItem.title}`
     : activeTab === "blocking"
       ? "屏蔽页"
-      : activeTab === "profile"
-        ? "我的页"
-        : "内容页";
+      : activeTab === "favorites"
+        ? "收藏页"
+        : activeTab === "profile"
+          ? "我的页"
+          : "内容页";
 
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
@@ -1222,6 +1334,10 @@ export function App() {
   const sourceOptions = useMemo(() => {
     return Array.from(new Set(items.map((item) => item.sourceType)));
   }, [items]);
+
+  const favoriteItems = useMemo(() => {
+    return items.filter((item) => favoriteIds.has(item.id));
+  }, [favoriteIds, items]);
 
   function cycleSourceFilter() {
     if (sourceFilter === "all") {
@@ -1273,6 +1389,17 @@ export function App() {
     setDislikedIds(nextDislikedIds);
     saveIdSet(LIKED_IDS_KEY, nextLikedIds);
     saveIdSet(DISLIKED_IDS_KEY, nextDislikedIds);
+  }
+
+  function toggleFavorite(item: ContentItem) {
+    const nextFavoriteIds = new Set(favoriteIds);
+    if (nextFavoriteIds.has(item.id)) {
+      nextFavoriteIds.delete(item.id);
+    } else {
+      nextFavoriteIds.add(item.id);
+    }
+    setFavoriteIds(nextFavoriteIds);
+    saveIdSet(FAVORITE_IDS_KEY, nextFavoriteIds);
   }
 
   function feedbackSignalFor(item: ContentItem): FeedbackSignal | null {
@@ -1572,6 +1699,17 @@ export function App() {
                     onCycleSourceFilter={cycleSourceFilter}
                     onViewModeChange={setViewMode}
                     onOpenItem={setReaderItem}
+                    favoriteIds={favoriteIds}
+                    onToggleFavorite={toggleFavorite}
+                  />
+                ) : activeTab === "favorites" ? (
+                  <FavoritesHome
+                    items={favoriteItems}
+                    viewMode={viewMode}
+                    onViewModeChange={setViewMode}
+                    onOpenItem={setReaderItem}
+                    favoriteIds={favoriteIds}
+                    onToggleFavorite={toggleFavorite}
                   />
                 ) : activeTab === "blocking" ? (
                   <BlockingView

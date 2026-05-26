@@ -710,10 +710,8 @@ textarea:focus-visible {
 }
 
 .content-card {
-  display: flex;
-  flex-direction: column;
+  position: relative;
   min-width: 0;
-  padding: 14px;
   border-radius: 18px;
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.67);
@@ -731,7 +729,22 @@ textarea:focus-visible {
   box-shadow: 0 14px 32px rgba(42, 43, 45, 0.12);
 }
 
-.content-card.list {
+.content-card-main {
+  width: 100%;
+  min-width: 0;
+  min-height: 100%;
+  border-radius: inherit;
+  background: transparent;
+  text-align: left;
+}
+
+.content-card.grid .content-card-main {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 14px 48px;
+}
+
+.content-card.list .content-card-main {
   display: grid;
   grid-template-columns: 94px 1fr;
   grid-template-areas:
@@ -740,6 +753,7 @@ textarea:focus-visible {
   gap: 0 14px;
   align-items: center;
   min-height: 126px;
+  padding: 14px 54px 14px 14px;
 }
 
 .card-header {
@@ -1027,7 +1041,7 @@ textarea:focus-visible {
 
 .card-meta {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 8px;
   margin-top: 12px;
   color: #9a9b9e;
@@ -1039,6 +1053,30 @@ textarea:focus-visible {
   grid-area: meta;
   align-self: start;
   justify-content: flex-start;
+}
+
+.favorite-button {
+  position: absolute;
+  right: 13px;
+  bottom: 13px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(240, 241, 243, 0.92);
+  color: #73757b;
+  box-shadow: 0 8px 18px rgba(34, 35, 38, 0.1);
+}
+
+.favorite-button.active {
+  color: #fff;
+  background: #25262b;
+}
+
+.favorite-button:hover {
+  transform: translateY(-1px);
 }
 
 .empty-state {
@@ -1064,7 +1102,7 @@ textarea:focus-visible {
   position: relative;
   z-index: 7;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 6px;
   min-height: 70px;
   margin: 8px 10px 0;
@@ -1073,6 +1111,17 @@ textarea:focus-visible {
   background: rgba(255, 255, 255, 0.78);
   box-shadow: 0 18px 48px rgba(24, 26, 30, 0.18);
   backdrop-filter: blur(18px);
+}
+
+.favorites-toolbar {
+  grid-template-columns: 1fr auto;
+  margin-top: 0;
+}
+
+.favorites-toolbar > span {
+  color: #8f9095;
+  font-size: 15px;
+  font-weight: 720;
 }
 
 .bottom-tab-bar button {
