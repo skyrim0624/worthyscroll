@@ -1,5 +1,6 @@
 node_modules/
 dist/
+$CODEX_HOME/
 
 # 本地生成的数据和个人内容库存
 data/
