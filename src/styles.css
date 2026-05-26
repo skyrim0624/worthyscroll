@@ -415,6 +415,25 @@ textarea:focus-visible {
   display: none;
 }
 
+.app-viewport:has(.reader-view) {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(37, 38, 43, 0.34) transparent;
+}
+
+.app-viewport:has(.reader-view)::-webkit-scrollbar {
+  display: block;
+  width: 4px;
+}
+
+.app-viewport:has(.reader-view)::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.app-viewport:has(.reader-view)::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(37, 38, 43, 0.34);
+}
+
 .status-bar {
   position: relative;
   height: 42px;
