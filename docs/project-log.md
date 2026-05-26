@@ -9,9 +9,9 @@
 WorthyScroll 第一版不是单纯的阅读器，也不是单纯的 App Blocker。它要把“堵”和“疏”合成一个 iOS 原生应用：
 
 - 堵：实现类似 one sec 的六项核心能力，拦住视频号、小红书、YouTube Shorts 等目标入口。
-- 疏：把 X、公众号、未来 Substack 等未读库存整理成更值得刷的内容流。
+- 疏：把 X、公众号、未来 Substack 等保存内容整理成更值得刷的内容流。
 - 阅读：所有内容尽量在 App 内阅读，不把用户重新送回高诱惑平台。
-- 数据：内容库存、阅读状态、反馈、推送、屏蔽会话统一进 Supabase。
+- 数据：内容池、阅读状态、反馈、推送、屏蔽会话统一进 Supabase。
 - 原生：系统级屏蔽必须走 Xcode 原生能力和 Apple Screen Time 技术栈。
 
 ## 开发循环
@@ -46,7 +46,7 @@ WorthyScroll 第一版不是单纯的阅读器，也不是单纯的 App Blocker�
 - [x] P0 项目日志和并行开发框架
 - [x] P1 Xcode 原生工程外壳
 - [x] P2 共享模型与本地内容缓存
-- [ ] P3 公众号未读库存同步到 App
+- [ ] P3 公众号保存内容导入 App
 - [x] P4 App 内内容货架和阅读器
 - [x] P5 Screen Time 授权与目标 App 选择
 - [x] P6 Manual Block 和屏蔽配置

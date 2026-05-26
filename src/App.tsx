@@ -1,22 +1,26 @@
 import {
+  Archive,
   ArrowLeft,
-  BookOpen,
+  Bell,
+  BookMarked,
   Check,
   ChevronDown,
   Clipboard,
-  Clock3,
   Download,
   Eye,
   EyeOff,
   Grid2X2,
-  Heart,
+  Hand,
   List,
   MoreHorizontal,
   PenLine,
+  RotateCcw,
   Search,
-  Sparkles,
+  Settings,
+  Shield,
+  ThumbsDown,
+  ThumbsUp,
   Trash2,
-  X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent } from "react";
@@ -24,6 +28,8 @@ import { ContentItem, contentItems } from "./content-items";
 
 type ViewMode = "grid" | "list";
 type SourceFilter = "all" | ContentItem["sourceType"];
+type AppTab = "content" | "blocking" | "profile";
+type FeedbackSignal = "liked" | "disliked";
 type ReaderBlock =
   | { type: "heading"; text: string }
   | { type: "paragraph"; text: string }
@@ -51,15 +57,21 @@ const sourceLabel: Record<ContentItem["sourceType"], string> = {
   substack: "Substack",
 };
 
-const LAST_PICK_KEY = "shortvideo-last-pick";
 const ANNOTATION_STORAGE_KEY = "worthyscroll-annotations";
+const READ_IDS_KEY = "shortvideo-read-ids";
+const LIKED_IDS_KEY = "worthyscroll-liked-ids";
+const DISLIKED_IDS_KEY = "worthyscroll-disliked-ids";
+const HIDDEN_IDS_KEY = "worthyscroll-hidden-ids";
+const BLOCK_TARGETS_KEY = "worthyscroll-block-targets";
+const BLOCK_ACTIVE_KEY = "worthyscroll-block-active";
+const REMINDER_ENABLED_KEY = "worthyscroll-reminder-enabled";
 
 async function loadContentItems(): Promise<ContentItem[]> {
   const response = await fetch(`/content-items.json?ts=${Date.now()}`, {
     cache: "no-store",
   });
   if (!response.ok) {
-    throw new Error(`内容库存读取失败：${response.status}`);
+    throw new Error(`内容读取失败：${response.status}`);
   }
   return response.json();
 }
@@ -143,6 +155,19 @@ function loadAnnotations(): Annotation[] {
   } catch {
     return [];
   }
+}
+
+function loadIdSet(key: string): Set<string> {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(key) || "[]");
+    return new Set(Array.isArray(parsed) ? parsed : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveIdSet(key: string, value: Set<string>) {
+  localStorage.setItem(key, JSON.stringify(Array.from(value)));
 }
 
 function formatAnnotationsForCodex(annotations: Annotation[]) {
@@ -273,67 +298,27 @@ function ContentCard({
   );
 }
 
-function DetailSheet({
-  item,
-  onClose,
-  onMarkRead,
-  onStartRead,
-}: {
-  item: ContentItem | null;
-  onClose: () => void;
-  onMarkRead: (item: ContentItem) => void;
-  onStartRead: (item: ContentItem) => void;
-}) {
-  if (!item) {
-    return null;
-  }
-
-  return (
-    <div className="detail-backdrop" onClick={onClose}>
-      <section className="detail-sheet" onClick={(event) => event.stopPropagation()}>
-        <div className="sheet-handle" />
-        <button className="sheet-close" onClick={onClose} aria-label="关闭">
-          <X size={18} />
-        </button>
-        <PreviewArtwork item={item} />
-        <p className="detail-source">
-          {sourceLabel[item.sourceType]} · {item.savedAt}
-          {item.estimatedMinutes ? ` · ${item.estimatedMinutes} 分钟` : ""}
-        </p>
-        <h2>{item.title}</h2>
-        <p className="detail-excerpt">{item.excerpt}</p>
-        <div className="detail-actions">
-          <button className="primary-action" onClick={() => onStartRead(item)}>
-            <BookOpen size={18} />
-            在 App 内阅读
-          </button>
-          <button>
-            <Heart size={18} />
-          </button>
-          <button onClick={() => onMarkRead(item)}>
-            <Check size={18} />
-          </button>
-        </div>
-      </section>
-    </div>
-  );
-}
-
 function ReaderView({
   item,
   onClose,
   onMarkRead,
+  onHide,
+  onSignal,
+  feedbackSignal,
 }: {
   item: ContentItem;
   onClose: () => void;
   onMarkRead: (item: ContentItem) => void;
+  onHide: (item: ContentItem) => void;
+  onSignal: (item: ContentItem, signal: FeedbackSignal) => void;
+  feedbackSignal: FeedbackSignal | null;
 }) {
   const blocks = useMemo(() => parseReaderBlocks(item), [item]);
 
   return (
     <article className="reader-view">
       <header className="reader-nav">
-        <button onClick={onClose} aria-label="返回库存">
+        <button onClick={onClose} aria-label="返回内容页">
           <ArrowLeft size={25} strokeWidth={2.4} />
         </button>
         <span>阅读中</span>
@@ -355,6 +340,27 @@ function ReaderView({
           {[item.sourceName, item.author].filter(Boolean).join(" · ")}
         </p>
       ) : null}
+
+      <div className="reader-actions-bar">
+        <button
+          className={feedbackSignal === "liked" ? "active" : ""}
+          onClick={() => onSignal(item, "liked")}
+        >
+          <ThumbsUp size={17} />
+          喜欢
+        </button>
+        <button
+          className={feedbackSignal === "disliked" ? "active" : ""}
+          onClick={() => onSignal(item, "disliked")}
+        >
+          <ThumbsDown size={17} />
+          不喜欢
+        </button>
+        <button onClick={() => onHide(item)}>
+          <Archive size={17} />
+          隐藏
+        </button>
+      </div>
 
       <div className="reader-content">
         {blocks.map((block, index) => {
@@ -379,6 +385,254 @@ function ReaderView({
         })}
       </div>
     </article>
+  );
+}
+
+function ContentHome({
+  items,
+  isLoading,
+  loadError,
+  query,
+  sourceFilter,
+  viewMode,
+  onQueryChange,
+  onCycleSourceFilter,
+  onViewModeChange,
+  onOpenItem,
+  onOpenProfile,
+}: {
+  items: ContentItem[];
+  isLoading: boolean;
+  loadError: string;
+  query: string;
+  sourceFilter: SourceFilter;
+  viewMode: ViewMode;
+  onQueryChange: (query: string) => void;
+  onCycleSourceFilter: () => void;
+  onViewModeChange: (mode: ViewMode) => void;
+  onOpenItem: (item: ContentItem) => void;
+  onOpenProfile: () => void;
+}) {
+  return (
+    <section className="app-page content-page">
+      <header className="brand-header">
+        <div>
+          <p>WorthyScroll</p>
+          <h1>值得刷</h1>
+        </div>
+        <button aria-label="打开我的" onClick={onOpenProfile}>
+          <MoreHorizontal size={28} strokeWidth={2.5} />
+        </button>
+      </header>
+
+      <label className="search-box">
+        <Search size={24} strokeWidth={2.4} />
+        <input
+          value={query}
+          onChange={(event) => onQueryChange(event.target.value)}
+          placeholder="搜索内容"
+        />
+      </label>
+
+      <div className="filter-bar">
+        <button
+          className={sourceFilter === "all" ? "active-filter" : ""}
+          onClick={onCycleSourceFilter}
+        >
+          {sourceFilter === "all" ? "全部内容" : sourceLabel[sourceFilter]}
+          <ChevronDown size={20} strokeWidth={2.4} />
+        </button>
+        <div className="view-toggle" role="group" aria-label="视图切换">
+          <button
+            className={viewMode === "list" ? "selected" : ""}
+            onClick={() => onViewModeChange("list")}
+            aria-label="列表视图"
+          >
+            <List size={22} />
+          </button>
+          <button
+            className={viewMode === "grid" ? "selected" : ""}
+            onClick={() => onViewModeChange("grid")}
+            aria-label="网格视图"
+          >
+            <Grid2X2 size={22} />
+          </button>
+        </div>
+      </div>
+
+      <div className="content-summary">
+        <strong>{isLoading ? "整理中" : `${items.length} 条内容`}</strong>
+        <span>{loadError || "把保存过的内容整理成可读内容流"}</span>
+      </div>
+
+      <section className={`content-grid ${viewMode}`}>
+        {items.map((item) => (
+          <ContentCard key={item.id} item={item} viewMode={viewMode} onOpen={onOpenItem} />
+        ))}
+      </section>
+
+      {!isLoading && items.length === 0 ? (
+        <div className="empty-state">
+          <BookMarked size={28} />
+          <strong>这里暂时没有内容</strong>
+          <span>换个筛选或搜索词试试。</span>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function BlockingView({
+  selectedTargets,
+  blockActive,
+  onToggleTarget,
+  onToggleBlock,
+}: {
+  selectedTargets: Set<string>;
+  blockActive: boolean;
+  onToggleTarget: (id: string) => void;
+  onToggleBlock: () => void;
+}) {
+  const targets = [
+    { id: "xiaohongshu", name: "小红书", note: "减少无目的滑动" },
+    { id: "wechat-channels", name: "视频号", note: "保留聊天，拦住视频流" },
+    { id: "youtube-shorts", name: "YouTube Shorts", note: "只拦短视频入口" },
+    { id: "x", name: "X", note: "先做轻度摩擦" },
+  ];
+
+  return (
+    <section className="app-page blocking-page">
+      <header className="section-header">
+        <p>防沉迷</p>
+        <h1>把低质量入口挡住</h1>
+      </header>
+
+      <div className={blockActive ? "block-status active" : "block-status"}>
+        <Shield size={24} />
+        <div>
+          <strong>{blockActive ? "屏蔽中" : "未开启"}</strong>
+          <span>{selectedTargets.size} 个目标应用</span>
+        </div>
+      </div>
+
+      <div className="target-list">
+        {targets.map((target) => {
+          const selected = selectedTargets.has(target.id);
+          return (
+            <button
+              key={target.id}
+              className={selected ? "target-row selected" : "target-row"}
+              onClick={() => onToggleTarget(target.id)}
+            >
+              <span>
+                <b>{target.name}</b>
+                <small>{target.note}</small>
+              </span>
+              <i>{selected ? <Check size={18} /> : null}</i>
+            </button>
+          );
+        })}
+      </div>
+
+      <button
+        className={blockActive ? "block-action active" : "block-action"}
+        onClick={onToggleBlock}
+        disabled={selectedTargets.size === 0}
+      >
+        <Hand size={18} />
+        {blockActive ? "结束本次屏蔽" : "开始屏蔽"}
+      </button>
+    </section>
+  );
+}
+
+function ProfileView({
+  readCount,
+  likedCount,
+  dislikedCount,
+  onResetReading,
+  onResetFeedback,
+  reminderEnabled,
+  onToggleReminder,
+}: {
+  readCount: number;
+  likedCount: number;
+  dislikedCount: number;
+  onResetReading: () => void;
+  onResetFeedback: () => void;
+  reminderEnabled: boolean;
+  onToggleReminder: () => void;
+}) {
+  return (
+    <section className="app-page profile-page">
+      <header className="section-header">
+        <p>我的</p>
+        <h1>阅读记录</h1>
+      </header>
+
+      <div className="stats-grid">
+        <div>
+          <strong>{readCount}</strong>
+          <span>已读</span>
+        </div>
+        <div>
+          <strong>{likedCount}</strong>
+          <span>喜欢</span>
+        </div>
+        <div>
+          <strong>{dislikedCount}</strong>
+          <span>不喜欢</span>
+        </div>
+      </div>
+
+      <div className="settings-list">
+        <button onClick={onToggleReminder}>
+          <Bell size={18} />
+          <span>每天提醒我读一点</span>
+          <i>{reminderEnabled ? "开" : "关"}</i>
+        </button>
+        <button onClick={onResetReading}>
+          <RotateCcw size={18} />
+          <span>恢复已读内容</span>
+        </button>
+        <button onClick={onResetFeedback}>
+          <Trash2 size={18} />
+          <span>清空喜好反馈</span>
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function BottomTabBar({
+  activeTab,
+  onChange,
+}: {
+  activeTab: AppTab;
+  onChange: (tab: AppTab) => void;
+}) {
+  const tabs: Array<{ id: AppTab; label: string; icon: typeof BookMarked }> = [
+    { id: "content", label: "内容", icon: BookMarked },
+    { id: "blocking", label: "屏蔽", icon: Hand },
+    { id: "profile", label: "我的", icon: Settings },
+  ];
+
+  return (
+    <nav className="bottom-tab-bar" aria-label="主导航">
+      {tabs.map((tab) => {
+        const Icon = tab.icon;
+        return (
+          <button
+            key={tab.id}
+            className={activeTab === tab.id ? "active" : ""}
+            onClick={() => onChange(tab.id)}
+          >
+            <Icon size={22} />
+            <span>{tab.label}</span>
+          </button>
+        );
+      })}
+    </nav>
   );
 }
 
@@ -414,7 +668,7 @@ function AnnotationToolbar({
       </button>
       <button onClick={onToggleVisibility}>
         {showAnnotations ? <Eye size={17} /> : <EyeOff size={17} />}
-        {showAnnotations ? "显示中" : "已隐藏"}
+        {showAnnotations ? "隐藏批注" : "显示批注"}
       </button>
       <button onClick={onCopy} disabled={annotationCount === 0}>
         <Clipboard size={17} />
@@ -584,21 +838,27 @@ export function App() {
   const [query, setQuery] = useState("");
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
-  const [selectedItem, setSelectedItem] = useState<ContentItem | null>(null);
+  const [activeTab, setActiveTab] = useState<AppTab>("content");
   const [readerItem, setReaderItem] = useState<ContentItem | null>(null);
+  const [likedIds, setLikedIds] = useState<Set<string>>(() => loadIdSet(LIKED_IDS_KEY));
+  const [dislikedIds, setDislikedIds] = useState<Set<string>>(() => loadIdSet(DISLIKED_IDS_KEY));
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => loadIdSet(HIDDEN_IDS_KEY));
+  const [selectedBlockTargets, setSelectedBlockTargets] = useState<Set<string>>(() =>
+    loadIdSet(BLOCK_TARGETS_KEY),
+  );
+  const [blockActive, setBlockActive] = useState(
+    () => localStorage.getItem(BLOCK_ACTIVE_KEY) === "true",
+  );
+  const [reminderEnabled, setReminderEnabled] = useState(
+    () => localStorage.getItem(REMINDER_ENABLED_KEY) !== "false",
+  );
   const [annotationMode, setAnnotationMode] = useState(false);
   const [showAnnotations, setShowAnnotations] = useState(true);
   const [annotations, setAnnotations] = useState<Annotation[]>(loadAnnotations);
   const [annotationDraft, setAnnotationDraft] = useState<AnnotationDraft | null>(null);
   const [activeAnnotationId, setActiveAnnotationId] = useState<string | null>(null);
   const [copiedAnnotations, setCopiedAnnotations] = useState(false);
-  const [readIds, setReadIds] = useState<Set<string>>(() => {
-    try {
-      return new Set(JSON.parse(localStorage.getItem("shortvideo-read-ids") || "[]"));
-    } catch {
-      return new Set();
-    }
-  });
+  const [readIds, setReadIds] = useState<Set<string>>(() => loadIdSet(READ_IDS_KEY));
 
   useEffect(() => {
     loadContentItems()
@@ -607,7 +867,7 @@ export function App() {
         setLoadError("");
       })
       .catch((error: unknown) => {
-        setLoadError(error instanceof Error ? error.message : "内容库存读取失败");
+        setLoadError(error instanceof Error ? error.message : "内容读取失败");
       })
       .finally(() => setIsLoading(false));
   }, []);
@@ -620,24 +880,26 @@ export function App() {
     localStorage.setItem(ANNOTATION_STORAGE_KEY, JSON.stringify(annotations));
   }, [annotations]);
 
-  const currentViewLabel = readerItem ? `阅读页：${readerItem.title}` : "库存页";
+  const currentViewLabel = readerItem
+    ? `阅读页：${readerItem.title}`
+    : activeTab === "blocking"
+      ? "屏蔽页"
+      : activeTab === "profile"
+        ? "我的页"
+        : "内容页";
 
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
       const matchesSource = sourceFilter === "all" || item.sourceType === sourceFilter;
       const searchText = `${item.title} ${item.sourceName} ${item.excerpt}`.toLowerCase();
-      const isUnread = !readIds.has(item.id);
-      return isUnread && matchesSource && searchText.includes(query.trim().toLowerCase());
+      const isVisible = !readIds.has(item.id) && !hiddenIds.has(item.id);
+      return isVisible && matchesSource && searchText.includes(query.trim().toLowerCase());
     });
-  }, [items, query, readIds, sourceFilter]);
+  }, [hiddenIds, items, query, readIds, sourceFilter]);
 
   const sourceOptions = useMemo(() => {
     return Array.from(new Set(items.map((item) => item.sourceType)));
   }, [items]);
-
-  const totalMinutes = useMemo(() => {
-    return filteredItems.reduce((sum, item) => sum + item.estimatedMinutes, 0);
-  }, [filteredItems]);
 
   function cycleSourceFilter() {
     if (sourceFilter === "all") {
@@ -653,24 +915,104 @@ export function App() {
     const nextReadIds = new Set(readIds);
     nextReadIds.add(item.id);
     setReadIds(nextReadIds);
-    localStorage.setItem("shortvideo-read-ids", JSON.stringify(Array.from(nextReadIds)));
-    setSelectedItem(null);
+    saveIdSet(READ_IDS_KEY, nextReadIds);
     setReaderItem(null);
   }
 
-  function startReading(item: ContentItem) {
-    setSelectedItem(null);
-    setReaderItem(item);
+  function hideItem(item: ContentItem) {
+    const nextHiddenIds = new Set(hiddenIds);
+    nextHiddenIds.add(item.id);
+    setHiddenIds(nextHiddenIds);
+    saveIdSet(HIDDEN_IDS_KEY, nextHiddenIds);
+    setReaderItem(null);
   }
 
-  function pickNext() {
-    if (filteredItems.length === 0) {
+  function setFeedbackSignal(item: ContentItem, signal: FeedbackSignal) {
+    const nextLikedIds = new Set(likedIds);
+    const nextDislikedIds = new Set(dislikedIds);
+
+    if (signal === "liked") {
+      if (nextLikedIds.has(item.id)) {
+        nextLikedIds.delete(item.id);
+      } else {
+        nextLikedIds.add(item.id);
+      }
+      nextDislikedIds.delete(item.id);
+    } else {
+      if (nextDislikedIds.has(item.id)) {
+        nextDislikedIds.delete(item.id);
+      } else {
+        nextDislikedIds.add(item.id);
+      }
+      nextLikedIds.delete(item.id);
+    }
+
+    setLikedIds(nextLikedIds);
+    setDislikedIds(nextDislikedIds);
+    saveIdSet(LIKED_IDS_KEY, nextLikedIds);
+    saveIdSet(DISLIKED_IDS_KEY, nextDislikedIds);
+  }
+
+  function feedbackSignalFor(item: ContentItem): FeedbackSignal | null {
+    if (likedIds.has(item.id)) {
+      return "liked";
+    }
+    if (dislikedIds.has(item.id)) {
+      return "disliked";
+    }
+    return null;
+  }
+
+  function handleTabChange(tab: AppTab) {
+    setReaderItem(null);
+    setActiveTab(tab);
+    window.setTimeout(() => screenRef.current?.scrollTo({ top: 0, behavior: "smooth" }), 0);
+  }
+
+  function toggleBlockTarget(id: string) {
+    const nextTargets = new Set(selectedBlockTargets);
+    if (nextTargets.has(id)) {
+      nextTargets.delete(id);
+    } else {
+      nextTargets.add(id);
+    }
+    setSelectedBlockTargets(nextTargets);
+    saveIdSet(BLOCK_TARGETS_KEY, nextTargets);
+    if (nextTargets.size === 0) {
+      setBlockActive(false);
+      localStorage.setItem(BLOCK_ACTIVE_KEY, "false");
+    }
+  }
+
+  function toggleBlockActive() {
+    if (selectedBlockTargets.size === 0) {
       return;
     }
-    const lastPick = Number(localStorage.getItem(LAST_PICK_KEY) || "-1");
-    const nextIndex = (lastPick + 1) % Math.min(filteredItems.length, 12);
-    localStorage.setItem(LAST_PICK_KEY, String(nextIndex));
-    setSelectedItem(filteredItems[nextIndex]);
+    setBlockActive((currentValue) => {
+      localStorage.setItem(BLOCK_ACTIVE_KEY, String(!currentValue));
+      return !currentValue;
+    });
+  }
+
+  function resetReadingState() {
+    setReadIds(new Set());
+    setHiddenIds(new Set());
+    saveIdSet(READ_IDS_KEY, new Set());
+    saveIdSet(HIDDEN_IDS_KEY, new Set());
+  }
+
+  function resetFeedbackState() {
+    setLikedIds(new Set());
+    setDislikedIds(new Set());
+    saveIdSet(LIKED_IDS_KEY, new Set());
+    saveIdSet(DISLIKED_IDS_KEY, new Set());
+  }
+
+  function toggleReminder() {
+    setReminderEnabled((currentValue) => {
+      localStorage.setItem(REMINDER_ENABLED_KEY, String(!currentValue));
+      return !currentValue;
+    });
   }
 
   function createAnnotationDraft(x: number, y: number) {
@@ -794,97 +1136,56 @@ export function App() {
       <div className="prototype-workbench">
         <div className="preview-surface">
           <div className="phone-shell">
-            <div className="app-screen" ref={screenRef}>
+            <div className="app-screen">
               <PhoneStatusBar />
 
-              {readerItem ? (
-                <ReaderView
-                  item={readerItem}
-                  onClose={() => setReaderItem(null)}
-                  onMarkRead={markRead}
-                />
-              ) : (
-                <>
-                  <header className="top-nav">
-                    <button aria-label="返回">
-                      <ArrowLeft size={30} strokeWidth={2.3} />
-                    </button>
-                    <h1>未读库存</h1>
-                    <button aria-label="更多">
-                      <MoreHorizontal size={30} strokeWidth={2.5} />
-                    </button>
-                  </header>
+              <div className="app-viewport" ref={screenRef}>
+                {readerItem ? (
+                  <ReaderView
+                    item={readerItem}
+                    onClose={() => setReaderItem(null)}
+                    onMarkRead={markRead}
+                    onHide={hideItem}
+                    onSignal={setFeedbackSignal}
+                    feedbackSignal={feedbackSignalFor(readerItem)}
+                  />
+                ) : activeTab === "content" ? (
+                  <ContentHome
+                    items={filteredItems}
+                    isLoading={isLoading}
+                    loadError={loadError}
+                    query={query}
+                    sourceFilter={sourceFilter}
+                    viewMode={viewMode}
+                    onQueryChange={setQuery}
+                    onCycleSourceFilter={cycleSourceFilter}
+                    onViewModeChange={setViewMode}
+                    onOpenItem={setReaderItem}
+                    onOpenProfile={() => handleTabChange("profile")}
+                  />
+                ) : activeTab === "blocking" ? (
+                  <BlockingView
+                    selectedTargets={selectedBlockTargets}
+                    blockActive={blockActive}
+                    onToggleTarget={toggleBlockTarget}
+                    onToggleBlock={toggleBlockActive}
+                  />
+                ) : (
+                  <ProfileView
+                    readCount={readIds.size}
+                    likedCount={likedIds.size}
+                    dislikedCount={dislikedIds.size}
+                    onResetReading={resetReadingState}
+                    onResetFeedback={resetFeedbackState}
+                    reminderEnabled={reminderEnabled}
+                    onToggleReminder={toggleReminder}
+                  />
+                )}
+              </div>
 
-                  <label className="search-box">
-                    <Search size={24} strokeWidth={2.4} />
-                    <input
-                      value={query}
-                      onChange={(event) => setQuery(event.target.value)}
-                      placeholder="搜索..."
-                    />
-                  </label>
-
-                  <div className="filter-bar">
-                    <button
-                      className={sourceFilter === "all" ? "active-filter" : ""}
-                      onClick={cycleSourceFilter}
-                    >
-                      {sourceFilter === "all" ? "全部内容" : sourceLabel[sourceFilter]}
-                      <ChevronDown size={20} strokeWidth={2.4} />
-                    </button>
-                    <button>
-                      最近同步
-                      <ChevronDown size={20} strokeWidth={2.4} />
-                    </button>
-                    <div className="view-toggle" role="group" aria-label="视图切换">
-                      <button
-                        className={viewMode === "list" ? "selected" : ""}
-                        onClick={() => setViewMode("list")}
-                        aria-label="列表视图"
-                      >
-                        <List size={22} />
-                      </button>
-                      <button
-                        className={viewMode === "grid" ? "selected" : ""}
-                        onClick={() => setViewMode("grid")}
-                        aria-label="网格视图"
-                      >
-                        <Grid2X2 size={22} />
-                      </button>
-                    </div>
-                  </div>
-
-                  <section className="daily-rail" aria-label="今日推荐">
-                    <Sparkles size={16} />
-                    <span>{isLoading ? "同步中" : `${filteredItems.length} 条可读`}</span>
-                    <span>{loadError || "从你的公众号库存里挑选"}</span>
-                  </section>
-
-                  <section className="shelf-hero">
-                    <div>
-                      <p>现在刷点好的</p>
-                      <h2>从已收藏但没看的内容里挑一条</h2>
-                    </div>
-                    <button onClick={pickNext}>帮我挑</button>
-                  </section>
-
-                  <section className={`content-grid ${viewMode}`}>
-                    {filteredItems.map((item) => (
-                      <ContentCard
-                        key={item.id}
-                        item={item}
-                        viewMode={viewMode}
-                        onOpen={setSelectedItem}
-                      />
-                    ))}
-                  </section>
-
-                  <div className="floating-read-state">
-                    <Clock3 size={18} />
-                    <span>库存 {totalMinutes} 分钟</span>
-                  </div>
-                </>
-              )}
+              {!readerItem ? (
+                <BottomTabBar activeTab={activeTab} onChange={handleTabChange} />
+              ) : null}
             </div>
           </div>
 
@@ -911,20 +1212,15 @@ export function App() {
           />
         </div>
 
-        <AnnotationPanel
-          annotations={annotations}
-          activeAnnotationId={activeAnnotationId}
-          onEdit={editAnnotation}
-          onDelete={deleteAnnotation}
-        />
+        {showAnnotations ? (
+          <AnnotationPanel
+            annotations={annotations}
+            activeAnnotationId={activeAnnotationId}
+            onEdit={editAnnotation}
+            onDelete={deleteAnnotation}
+          />
+        ) : null}
       </div>
-
-      <DetailSheet
-        item={selectedItem}
-        onClose={() => setSelectedItem(null)}
-        onMarkRead={markRead}
-        onStartRead={startReading}
-      />
     </main>
   );
 }
