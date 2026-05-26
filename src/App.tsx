@@ -1087,29 +1087,35 @@ function AnnotationToolbar({
 }) {
   return (
     <aside className="annotation-toolbar" aria-label="批注工具">
-      <button
-        className={annotationMode ? "annotation-primary active" : "annotation-primary"}
-        onClick={onToggleMode}
-      >
-        <PenLine size={18} />
-        {annotationMode ? "退出批注" : "开始批注"}
-      </button>
-      <button onClick={onToggleVisibility}>
-        {showAnnotations ? <Eye size={17} /> : <EyeOff size={17} />}
-        {showAnnotations ? "隐藏批注" : "显示批注"}
-      </button>
-      <button onClick={onCopy} disabled={annotationCount === 0}>
-        <Clipboard size={17} />
-        {copied ? "已复制" : "复制给 Codex"}
-      </button>
-      <button onClick={onDownload} disabled={annotationCount === 0}>
-        <Download size={17} />
-        下载批注
-      </button>
-      <button className="danger" onClick={onClear} disabled={annotationCount === 0}>
-        <Trash2 size={17} />
-        清空
-      </button>
+      <div className="annotation-toolbar-header">
+        <span>{annotationMode ? "正在批注" : "Review"}</span>
+        <b>{annotationCount}</b>
+      </div>
+      <div className="annotation-toolbar-actions">
+        <button
+          className={annotationMode ? "annotation-primary active" : "annotation-primary"}
+          onClick={onToggleMode}
+        >
+          <PenLine size={18} />
+          {annotationMode ? "退出批注" : "开始批注"}
+        </button>
+        <button onClick={onToggleVisibility}>
+          {showAnnotations ? <Eye size={17} /> : <EyeOff size={17} />}
+          {showAnnotations ? "隐藏批注" : "显示批注"}
+        </button>
+        <button onClick={onCopy} disabled={annotationCount === 0}>
+          <Clipboard size={17} />
+          {copied ? "已复制" : "复制给 Codex"}
+        </button>
+        <button onClick={onDownload} disabled={annotationCount === 0}>
+          <Download size={17} />
+          下载批注
+        </button>
+        <button className="danger" onClick={onClear} disabled={annotationCount === 0}>
+          <Trash2 size={17} />
+          清空
+        </button>
+      </div>
       <p>{annotationMode ? "移动鼠标预览组件范围，点击后写批注。" : "批注会保存在本机浏览器里。"}</p>
     </aside>
   );
@@ -1128,13 +1134,20 @@ function AnnotationPanel({
 }) {
   return (
     <aside className="annotation-panel" aria-label="批注列表">
-      <div>
-        <p>批注</p>
-        <strong>{annotations.length}</strong>
-      </div>
+      <header className="annotation-panel-header">
+        <div>
+          <span>当前页面</span>
+          <strong>批注</strong>
+        </div>
+        <b>{annotations.length}</b>
+      </header>
 
       {annotations.length === 0 ? (
-        <p className="annotation-empty">打开批注模式后，在手机预览上点一下就能写意见。</p>
+        <div className="annotation-empty">
+          <PenLine size={20} />
+          <b>点选组件开始评审</b>
+          <p>打开批注模式后，在手机预览上移动鼠标预览范围，点一下就能写意见。</p>
+        </div>
       ) : (
         <ol>
           {annotations.map((annotation, index) => (
@@ -1370,8 +1383,12 @@ function AnnotationLayer({
             onSaveDraft();
           }}
         >
-          <label>
+          <div className="annotation-popover-header">
             <span>{draft.id ? "编辑批注" : "新增批注"}</span>
+            <small>{draft.targetLabel || currentViewLabel}</small>
+          </div>
+          <label className="annotation-text-field">
+            <span>意见</span>
             <textarea
               value={draft.text}
               onChange={(event) => onDraftTextChange(event.target.value)}
@@ -1440,7 +1457,7 @@ function AnnotationLayer({
               ))}
             </ul>
           ) : null}
-          <div>
+          <div className="annotation-popover-actions">
             {draft.id ? (
               <button type="button" className="danger" onClick={onDeleteDraft}>
                 删除
