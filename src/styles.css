@@ -564,6 +564,35 @@ textarea:focus-visible {
   letter-spacing: 0;
 }
 
+.brand-header .brand-wordmark {
+  position: relative;
+  display: inline-block;
+  color: #17181b;
+  font-family:
+    "HanziPen SC", "Hannotate SC", "Xingkai SC", "Kaiti SC", "STKaiti", "KaiTi",
+    cursive;
+  font-size: 45px;
+  font-weight: 780;
+  line-height: 0.98;
+  letter-spacing: 0;
+  transform: rotate(-1.6deg);
+  text-shadow:
+    0.9px 0 rgba(23, 24, 27, 0.2),
+    0 1.2px rgba(23, 24, 27, 0.08);
+}
+
+.brand-header .brand-wordmark::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  right: 2px;
+  bottom: -7px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(111, 116, 217, 0.18);
+  transform: rotate(-1.8deg);
+}
+
 .search-box {
   display: flex;
   align-items: center;

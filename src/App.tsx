@@ -646,7 +646,7 @@ function ContentHome({
         data-annotation-label="内容页标题区"
       >
         <div>
-          <h1>刷点好的</h1>
+          <h1 className="brand-wordmark">刷点好的</h1>
           <p>by Ziyang</p>
         </div>
       </header>
