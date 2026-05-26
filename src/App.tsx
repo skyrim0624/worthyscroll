@@ -374,10 +374,25 @@ function ContentCard({
         data-annotation-label={`标题：${item.title}`}
       >
         <div>
-          <h2>{item.title}</h2>
-          <p>{item.savedAt}</p>
+          <h2
+            data-annotation-target={contentTargetId("content-title-text", item)}
+            data-annotation-label={`标题文字：${item.title}`}
+          >
+            {item.title}
+          </h2>
+          <p
+            data-annotation-target={contentTargetId("content-saved-date", item)}
+            data-annotation-label={`保存日期：${item.title}`}
+          >
+            {item.savedAt}
+          </p>
         </div>
-        <MoreHorizontal size={22} strokeWidth={2.6} />
+        <MoreHorizontal
+          size={22}
+          strokeWidth={2.6}
+          data-annotation-target={contentTargetId("content-card-more", item)}
+          data-annotation-label={`卡片更多按钮：${item.title}`}
+        />
       </div>
       <PreviewArtwork item={item} />
       <div
@@ -385,8 +400,18 @@ function ContentCard({
         data-annotation-target={contentTargetId("content-meta", item)}
         data-annotation-label={`来源和时间：${item.title}`}
       >
-        <span>{sourceLabel[item.sourceType]}</span>
-        <span>{item.estimatedMinutes} 分钟</span>
+        <span
+          data-annotation-target={contentTargetId("content-source", item)}
+          data-annotation-label={`内容来源：${item.title}`}
+        >
+          {sourceLabel[item.sourceType]}
+        </span>
+        <span
+          data-annotation-target={contentTargetId("content-duration", item)}
+          data-annotation-label={`阅读时长：${item.title}`}
+        >
+          {item.estimatedMinutes} 分钟
+        </span>
       </div>
     </button>
   );
@@ -613,8 +638,12 @@ function ContentHome({
       </div>
 
       <div className="content-summary" data-annotation-target="content-summary" data-annotation-label="内容数量说明">
-        <strong>{isLoading ? "整理中" : `${items.length} 条内容`}</strong>
-        <span>{loadError || "把保存过的内容整理成可读内容流"}</span>
+        <strong data-annotation-target="content-summary-count" data-annotation-label="内容数量">
+          {isLoading ? "整理中" : `${items.length} 条内容`}
+        </strong>
+        <span data-annotation-target="content-summary-description" data-annotation-label="内容页说明文案">
+          {loadError || "把保存过的内容整理成可读内容流"}
+        </span>
       </div>
 
       <section className={`content-grid ${viewMode}`} data-annotation-target="content-grid" data-annotation-label="内容卡片列表">
