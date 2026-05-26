@@ -1,0 +1,18 @@
+{
+  "name": "刷点好的",
+  "short_name": "刷点好的",
+  "description": "把想看的好内容整理成一个可以刷的阅读 App。",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f6f3ec",
+  "theme_color": "#111216",
+  "icons": [
+    {
+      "src": "/worthy-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

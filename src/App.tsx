@@ -24,15 +24,31 @@ import {
   ThumbsDown,
   ThumbsUp,
   Trash2,
+  User,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { MouseEvent, RefObject } from "react";
+import type { FormEvent, MouseEvent, RefObject } from "react";
 import { ContentItem, contentItems } from "./content-items";
 
 type ViewMode = "grid" | "list";
 type SourceFilter = "all" | ContentItem["sourceType"];
 type AppTab = "content" | "favorites" | "blocking" | "profile";
+type AuthMode = "login" | "register";
 type FeedbackSignal = "liked" | "disliked";
+type SessionUser = {
+  id: string;
+  email: string;
+  displayName: string;
+  emailVerified: boolean;
+};
+type AuthResponse = {
+  ok?: boolean;
+  user?: SessionUser | null;
+  error?: string;
+  message?: string;
+  verificationUrl?: string;
+  emailSent?: boolean;
+};
 type ReaderBlock =
   | { type: "heading"; text: string }
   | { type: "paragraph"; text: string }
@@ -106,6 +122,22 @@ const HIDDEN_IDS_KEY = "worthyscroll-hidden-ids";
 const BLOCK_TARGETS_KEY = "worthyscroll-block-targets";
 const BLOCK_ACTIVE_KEY = "worthyscroll-block-active";
 const REMINDER_ENABLED_KEY = "worthyscroll-reminder-enabled";
+
+async function authRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const response = await fetch(path, {
+    credentials: "include",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+  });
+  const data = (await response.json().catch(() => ({}))) as AuthResponse;
+  if (!response.ok) {
+    throw new Error(data.error || "请求失败");
+  }
+  return data as T;
+}
 
 async function loadContentItems(): Promise<ContentItem[]> {
   const response = await fetch(`/content-items.json?ts=${Date.now()}`, {
@@ -975,6 +1007,11 @@ function ProfileView({
   readCount,
   likedCount,
   dislikedCount,
+  sessionUser,
+  authError,
+  onLogin,
+  onRegister,
+  onLogout,
   onResetReading,
   onResetFeedback,
   reminderEnabled,
@@ -983,17 +1020,123 @@ function ProfileView({
   readCount: number;
   likedCount: number;
   dislikedCount: number;
+  sessionUser: SessionUser | null;
+  authError: string;
+  onLogin: (email: string, password: string) => Promise<void>;
+  onRegister: (email: string, password: string, displayName: string) => Promise<AuthResponse>;
+  onLogout: () => Promise<void>;
   onResetReading: () => void;
   onResetFeedback: () => void;
   reminderEnabled: boolean;
   onToggleReminder: () => void;
 }) {
+  const [authMode, setAuthMode] = useState<AuthMode>("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [message, setMessage] = useState(authError);
+  const [verificationUrl, setVerificationUrl] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    setMessage(authError);
+  }, [authError]);
+
+  async function handleAuthSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsSubmitting(true);
+    setMessage("");
+    setVerificationUrl("");
+    try {
+      if (authMode === "login") {
+        await onLogin(email, password);
+        setMessage("已登录。");
+      } else {
+        const response = await onRegister(email, password, displayName);
+        setMessage(response.message || "账号已创建，请完成邮箱验证。");
+        setVerificationUrl(response.verificationUrl || "");
+      }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "操作失败");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <section className="app-page profile-page" data-annotation-target="profile-page" data-annotation-label="我的页">
       <header className="section-header" data-annotation-target="profile-header" data-annotation-label="我的页标题区">
         <p>我的</p>
-        <h1>阅读记录</h1>
+        <h1>{sessionUser ? "账号与记录" : "登录账号"}</h1>
       </header>
+
+      {sessionUser ? (
+        <div className="account-card" data-annotation-target="account-card" data-annotation-label="已登录账号卡片">
+          <User size={28} />
+          <div>
+            <strong>{sessionUser.displayName || "刷点好的用户"}</strong>
+            <span>{sessionUser.email}</span>
+          </div>
+          <i>{sessionUser.emailVerified ? "已验证" : "未验证"}</i>
+        </div>
+      ) : (
+        <div className="auth-card" data-annotation-target="auth-card" data-annotation-label="登录注册卡片">
+          <div className="auth-switch" data-annotation-target="auth-switch" data-annotation-label="登录注册切换">
+            <button className={authMode === "login" ? "active" : ""} onClick={() => setAuthMode("login")}>
+              登录
+            </button>
+            <button className={authMode === "register" ? "active" : ""} onClick={() => setAuthMode("register")}>
+              注册
+            </button>
+          </div>
+
+          <form className="auth-form" onSubmit={handleAuthSubmit}>
+            {authMode === "register" ? (
+              <label>
+                昵称
+                <input
+                  value={displayName}
+                  onChange={(event) => setDisplayName(event.target.value)}
+                  placeholder="Ziyang"
+                  autoComplete="name"
+                />
+              </label>
+            ) : null}
+            <label>
+              邮箱
+              <input
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="you@example.com"
+                type="email"
+                autoComplete="email"
+                required
+              />
+            </label>
+            <label>
+              密码
+              <input
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="至少 8 位"
+                type="password"
+                autoComplete={authMode === "login" ? "current-password" : "new-password"}
+                required
+              />
+            </label>
+            <button className="auth-submit" disabled={isSubmitting}>
+              {isSubmitting ? "处理中" : authMode === "login" ? "登录" : "创建账号"}
+            </button>
+          </form>
+
+          {message ? <p className="auth-message">{message}</p> : null}
+          {verificationUrl ? (
+            <a className="verification-link" href={verificationUrl}>
+              打开邮箱验证链接
+            </a>
+          ) : null}
+        </div>
+      )}
 
       <div className="stats-grid" data-annotation-target="profile-stats" data-annotation-label="阅读统计">
         <div>
@@ -1016,6 +1159,12 @@ function ProfileView({
           <span>每天提醒我读一点</span>
           <i>{reminderEnabled ? "开" : "关"}</i>
         </button>
+        {sessionUser ? (
+          <button onClick={onLogout} data-annotation-target="profile-logout" data-annotation-label="退出登录按钮">
+            <User size={18} />
+            <span>退出登录</span>
+          </button>
+        ) : null}
         <button onClick={onResetReading} data-annotation-target="profile-reset-reading" data-annotation-label="恢复已读内容按钮">
           <RotateCcw size={18} />
           <span>恢复已读内容</span>
@@ -1509,6 +1658,8 @@ export function App() {
   const [annotationLayoutVersion, setAnnotationLayoutVersion] = useState(0);
   const [copiedAnnotations, setCopiedAnnotations] = useState(false);
   const [readIds, setReadIds] = useState<Set<string>>(() => loadIdSet(READ_IDS_KEY));
+  const [sessionUser, setSessionUser] = useState<SessionUser | null>(null);
+  const [authError, setAuthError] = useState("");
 
   useEffect(() => {
     loadContentItems()
@@ -1520,6 +1671,18 @@ export function App() {
         setLoadError(error instanceof Error ? error.message : "内容读取失败");
       })
       .finally(() => setIsLoading(false));
+  }, []);
+
+  useEffect(() => {
+    authRequest<AuthResponse>("/api/auth/session")
+      .then((response) => {
+        setSessionUser(response.user || null);
+        setAuthError("");
+      })
+      .catch(() => {
+        // NOTE: 本地 Vite 预览没有 Worker API，账号功能只在 Cloudflare Worker 线上版完整启用。
+        setAuthError("线上版会启用账号系统；本地预览暂时只看界面。");
+      });
   }, []);
 
   useEffect(() => {
@@ -1696,6 +1859,29 @@ export function App() {
       localStorage.setItem(REMINDER_ENABLED_KEY, String(!currentValue));
       return !currentValue;
     });
+  }
+
+  async function login(email: string, password: string) {
+    const response = await authRequest<AuthResponse>("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
+    setSessionUser(response.user || null);
+    setAuthError("");
+  }
+
+  async function register(email: string, password: string, displayName: string) {
+    const response = await authRequest<AuthResponse>("/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify({ email, password, displayName }),
+    });
+    setAuthError("");
+    return response;
+  }
+
+  async function logout() {
+    await authRequest<AuthResponse>("/api/auth/logout", { method: "POST", body: "{}" });
+    setSessionUser(null);
   }
 
   function createAnnotationDraft(draft: AnnotationDraft) {
@@ -1988,6 +2174,11 @@ export function App() {
                     readCount={readIds.size}
                     likedCount={likedIds.size}
                     dislikedCount={dislikedIds.size}
+                    sessionUser={sessionUser}
+                    authError={authError}
+                    onLogin={login}
+                    onRegister={register}
+                    onLogout={logout}
                     onResetReading={resetReadingState}
                     onResetFeedback={resetFeedbackState}
                     reminderEnabled={reminderEnabled}

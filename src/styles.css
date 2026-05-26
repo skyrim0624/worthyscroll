@@ -2054,6 +2054,145 @@ textarea:focus-visible {
   font-weight: 820;
 }
 
+.account-card,
+.auth-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: var(--card-shadow);
+}
+
+.account-card {
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.account-card > svg {
+  width: 46px;
+  height: 46px;
+  padding: 10px;
+  border-radius: 16px;
+  color: #f8f4ef;
+  background: #25262b;
+}
+
+.account-card strong,
+.account-card span {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.account-card strong {
+  color: #1f2024;
+  font-size: 17px;
+  font-weight: 790;
+}
+
+.account-card span {
+  margin-top: 3px;
+  color: #8a8c92;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.account-card i {
+  padding: 6px 9px;
+  border-radius: 999px;
+  color: #25262b;
+  background: #ececef;
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 780;
+}
+
+.auth-switch {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  padding: 6px;
+  border-radius: 999px;
+  background: rgba(239, 240, 242, 0.9);
+}
+
+.auth-switch button {
+  min-height: 38px;
+  border-radius: 999px;
+  color: #777980;
+  font-size: 14px;
+  font-weight: 760;
+}
+
+.auth-switch button.active {
+  color: #fff;
+  background: #25262b;
+}
+
+.auth-form {
+  display: grid;
+  gap: 10px;
+}
+
+.auth-form label {
+  display: grid;
+  gap: 7px;
+  color: #777980;
+  font-size: 12px;
+  font-weight: 720;
+}
+
+.auth-form input {
+  min-width: 0;
+  height: 48px;
+  padding: 0 14px;
+  border: 1px solid rgba(31, 32, 36, 0.08);
+  border-radius: 15px;
+  color: #1f2024;
+  background: rgba(255, 255, 255, 0.88);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 650;
+  outline: none;
+}
+
+.auth-form input:focus {
+  border-color: rgba(37, 38, 43, 0.28);
+}
+
+.auth-submit,
+.verification-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  border-radius: 16px;
+  color: #fff;
+  background: #25262b;
+  font-size: 15px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.auth-submit:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}
+
+.auth-message {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 16px;
+  color: #6d6f76;
+  background: rgba(239, 240, 242, 0.9);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
 @media (max-width: 560px) {
   .prototype-stage {
     min-height: 100dvh;

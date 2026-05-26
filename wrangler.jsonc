@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "worthyscroll",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-05-26",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
+  },
+  "vars": {
+    "APP_ORIGIN": "https://worthyscroll.loveice0624.workers.dev"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "worthyscroll-db",
+      "database_id": "c3dd2da1-6771-4117-9e07-5c504cc5ba58"
+    }
+  ]
+}

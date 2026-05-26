@@ -10,6 +10,23 @@ Web 原型继续保留，用来验证独立内容平台、浏览器可点流程�
 
 已经有一个基于参考图视觉方向做的移动端原型：首页是「值得刷」内容流，支持搜索、来源筛选、网格 / 列表切换、App 内全文阅读、阅读反馈、浏览器内模拟屏蔽和本地偏好状态。
 
+线上 PWA 已部署到 Cloudflare Workers：
+
+```text
+https://worthyscroll.loveice0624.workers.dev
+```
+
+它已经包含 Web App Manifest 和 Service Worker，可以在 iPhone Safari 里添加到主屏幕。Cloudflare D1 数据库名为 `worthyscroll-db`，当前用于账号、邮箱验证 token、登录 session 和后续内容数据。
+
+账号系统当前支持：
+
+- 邮箱 + 密码注册。
+- 验证链接确认邮箱。
+- 邮箱 + 密码登录。
+- HttpOnly Cookie 会话。
+
+当前限制：Cloudflare Email Sending 在现有账号下返回未授权，所以注册后页面会直接显示验证链接；等邮件发送权限开通后，再把验证链接改成真正发到邮箱。
+
 ```bash
 npm run dev -- --port 5174
 ```
