@@ -1292,31 +1292,48 @@ textarea:focus-visible {
 
 .reader-nav {
   position: sticky;
-  top: -22px;
+  top: 10px;
   z-index: 4;
   display: grid;
-  grid-template-columns: 44px 1fr 44px;
+  grid-template-columns: 46px minmax(0, 1fr) 46px;
   align-items: center;
-  min-height: 54px;
-  margin: 0 -2px 26px;
-  background: rgba(245, 245, 244, 0.84);
+  gap: 10px;
+  min-height: 58px;
+  margin: 0 0 28px;
+  padding: 6px 8px;
+  border: 1px solid rgba(37, 38, 43, 0.08);
+  border-radius: 999px;
+  background: rgba(245, 245, 244, 0.9);
   backdrop-filter: blur(18px);
+  box-shadow: 0 18px 38px rgba(31, 33, 38, 0.1);
 }
 
 .reader-nav button {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
+  border: 1px solid rgba(37, 38, 43, 0.07);
   border-radius: 50%;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.82);
   color: #3f4146;
+  box-shadow: 0 8px 20px rgba(31, 33, 38, 0.08);
 }
 
 .reader-nav span {
+  justify-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 76px;
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid rgba(37, 38, 43, 0.06);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.54);
   text-align: center;
   color: #72747a;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 760;
 }
 
@@ -1610,9 +1627,9 @@ textarea:focus-visible {
   }
 
   .annotation-toolbar {
-    top: 10px;
+    top: auto;
     right: 12px;
-    bottom: auto;
+    bottom: 12px;
     left: auto;
     width: 156px;
     grid-template-columns: 1fr;
@@ -1625,12 +1642,12 @@ textarea:focus-visible {
   .annotation-panel {
     position: fixed;
     left: 12px;
-    top: 10px;
-    right: 180px;
+    top: 126px;
+    right: 12px;
     bottom: auto;
     z-index: 39;
     width: auto;
-    max-height: 156px;
+    max-height: 132px;
     border-radius: 20px;
   }
 
