@@ -13,8 +13,10 @@
 - [x] 本地预览可以运行 WorthyScroll 内容流。
 - [x] 批注可以连续添加、复制给 Codex、下载和删除。
 - [x] 批注从静态画布坐标升级为组件锚点。
+- [x] 批注模式下鼠标悬停即可预览组件范围。
 - [x] 组件批注在内容流滚动时跟随被批注组件移动。
 - [x] 新增批注时高亮当前选中的组件。
+- [x] 沉淀本地 Codex skill：`html-annotation-workbench`。
 - [x] 成功构建并完成浏览器交互验证。
 - [x] 更新本日志勾选状态并提交推送。
 
@@ -23,10 +25,13 @@
 - [x] 给内容页、阅读页、屏蔽页、我的页和底部导航补充可批注组件锚点。
 - [x] 改造批注数据结构，保存组件 ID、组件名称和组件内偏移。
 - [x] 改造批注层定位逻辑，根据实时 DOM 位置渲染 pin 和高亮框。
+- [x] 增加 hover 预选高亮，降低点击前不知道选中范围的问题。
 - [x] 支持批注模式下滚动内容流，避免批注层把滚动锁死。
 - [x] 更新 README 的批注使用说明。
+- [x] 将组件锚点批注模式保存为可复用 skill。
 
 ## 接口依赖
 
 - Web 原型内容数据来自 `public/content-items.json`。
 - 组件锚点使用 `data-annotation-target` 和 `data-annotation-label`，后续新增可评审组件时应同步补齐。
+- 本地 skill 路径：`/Users/andreas/.codex/skills/html-annotation-workbench`。

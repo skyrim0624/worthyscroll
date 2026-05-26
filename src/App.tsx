@@ -23,7 +23,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { MouseEvent, RefObject, WheelEvent } from "react";
+import type { MouseEvent, RefObject } from "react";
 import { ContentItem, contentItems } from "./content-items";
 
 type ViewMode = "grid" | "list";
@@ -69,6 +69,10 @@ type AnnotationPoint = {
     width: number;
     height: number;
   };
+};
+type AnnotationHoverTarget = {
+  targetId: string;
+  targetLabel: string;
 };
 
 const sourceLabel: Record<ContentItem["sourceType"], string> = {
@@ -840,7 +844,7 @@ function AnnotationToolbar({
         <Trash2 size={17} />
         清空
       </button>
-      <p>{annotationMode ? "直接点 App 组件，批注会跟随组件滚动。" : "批注会保存在本机浏览器里。"}</p>
+      <p>{annotationMode ? "移动鼠标预览组件范围，点击后写批注。" : "批注会保存在本机浏览器里。"}</p>
     </aside>
   );
 }
@@ -897,12 +901,11 @@ function AnnotationLayer({
   annotationMode,
   showAnnotations,
   activeAnnotationId,
+  hoverTarget,
   screenRef,
-  scrollContainerRef,
   viewKey,
   currentViewLabel,
   layoutVersion,
-  onCreateDraft,
   onEdit,
   onDraftTextChange,
   onSaveDraft,
@@ -914,12 +917,11 @@ function AnnotationLayer({
   annotationMode: boolean;
   showAnnotations: boolean;
   activeAnnotationId: string | null;
+  hoverTarget: AnnotationHoverTarget | null;
   screenRef: RefObject<HTMLDivElement | null>;
-  scrollContainerRef: RefObject<HTMLDivElement | null>;
   viewKey: string;
   currentViewLabel: string;
   layoutVersion: number;
-  onCreateDraft: (draft: AnnotationDraft) => void;
   onEdit: (annotation: Annotation) => void;
   onDraftTextChange: (text: string) => void;
   onSaveDraft: () => void;
@@ -969,50 +971,25 @@ function AnnotationLayer({
     };
   }
 
-  function handleLayerClick(event: MouseEvent<HTMLDivElement>) {
-    if ((event.target as HTMLElement).closest(".annotation-pin, .annotation-popover")) {
-      return;
-    }
-
+  function getTargetFrame(targetId?: string) {
     const screenElement = screenRef.current;
-    if (!screenElement) {
-      return;
+    if (!screenElement || !targetId) {
+      return undefined;
     }
 
-    event.currentTarget.style.pointerEvents = "none";
-    const elementAtPoint = document.elementFromPoint(event.clientX, event.clientY);
-    event.currentTarget.style.pointerEvents = "";
+    const target = findAnnotationTargetById(screenElement, targetId);
+    if (!target) {
+      return undefined;
+    }
 
-    const target = findAnnotationTargetElement(elementAtPoint, screenElement);
     const screenRect = screenElement.getBoundingClientRect();
-    const targetRect = target?.getBoundingClientRect();
-    const fallbackX = ((event.clientX - screenRect.left) / screenRect.width) * 100;
-    const fallbackY = ((event.clientY - screenRect.top) / screenRect.height) * 100;
-
-    onCreateDraft({
-      x: fallbackX,
-      y: fallbackY,
-      text: "",
-      targetId: target?.dataset.annotationTarget,
-      targetLabel: target?.dataset.annotationLabel || currentViewLabel,
-      targetOffsetX: targetRect ? ((event.clientX - targetRect.left) / targetRect.width) * 100 : undefined,
-      targetOffsetY: targetRect ? ((event.clientY - targetRect.top) / targetRect.height) * 100 : undefined,
-      viewKey,
-      viewLabel: currentViewLabel,
-    });
-  }
-
-  function handleLayerWheel(event: WheelEvent<HTMLDivElement>) {
-    const scrollContainer = scrollContainerRef.current;
-    if (!scrollContainer) {
-      return;
-    }
-    event.preventDefault();
-    scrollContainer.scrollBy({
-      left: event.deltaX,
-      top: event.deltaY,
-      behavior: "auto",
-    });
+    const targetRect = target.getBoundingClientRect();
+    return {
+      left: targetRect.left - screenRect.left,
+      top: targetRect.top - screenRect.top,
+      width: targetRect.width,
+      height: targetRect.height,
+    };
   }
 
   const visibleAnnotations = showAnnotations
@@ -1024,13 +1001,16 @@ function AnnotationLayer({
     : activeAnnotation
       ? getAnnotationPoint(activeAnnotation)?.targetRect
       : undefined;
+  const hoverTargetFrame = annotationMode && !draft
+    ? getTargetFrame(hoverTarget?.targetId)
+    : undefined;
   const draftStyle = draft ? getPopoverStyle(draft) : undefined;
 
   return (
     <div className={annotationMode ? "annotation-layer enabled" : "annotation-layer"}>
-      {activeTargetFrame ? (
+      {activeTargetFrame && !hoverTargetFrame ? (
         <div
-          className="annotation-target-frame"
+          className="annotation-target-frame selected"
           style={{
             left: `${activeTargetFrame.left}px`,
             top: `${activeTargetFrame.top}px`,
@@ -1040,12 +1020,16 @@ function AnnotationLayer({
         />
       ) : null}
 
-      {annotationMode ? (
+      {hoverTargetFrame ? (
         <div
-          className="annotation-hit-area"
-          aria-label="添加批注"
-          onClick={handleLayerClick}
-          onWheel={handleLayerWheel}
+          className="annotation-target-frame hover"
+          aria-label={`当前悬停组件：${hoverTarget?.targetLabel || currentViewLabel}`}
+          style={{
+            left: `${hoverTargetFrame.left}px`,
+            top: `${hoverTargetFrame.top}px`,
+            width: `${hoverTargetFrame.width}px`,
+            height: `${hoverTargetFrame.height}px`,
+          }}
         />
       ) : null}
 
@@ -1133,6 +1117,7 @@ export function App() {
   const [annotations, setAnnotations] = useState<Annotation[]>(loadAnnotations);
   const [annotationDraft, setAnnotationDraft] = useState<AnnotationDraft | null>(null);
   const [activeAnnotationId, setActiveAnnotationId] = useState<string | null>(null);
+  const [hoverAnnotationTarget, setHoverAnnotationTarget] = useState<AnnotationHoverTarget | null>(null);
   const [annotationLayoutVersion, setAnnotationLayoutVersion] = useState(0);
   const [copiedAnnotations, setCopiedAnnotations] = useState(false);
   const [readIds, setReadIds] = useState<Set<string>>(() => loadIdSet(READ_IDS_KEY));
@@ -1254,6 +1239,7 @@ export function App() {
     setReaderItem(null);
     setActiveTab(tab);
     setAnnotationDraft(null);
+    setHoverAnnotationTarget(null);
     window.setTimeout(() => screenRef.current?.scrollTo({ top: 0, behavior: "smooth" }), 0);
   }
 
@@ -1307,6 +1293,67 @@ export function App() {
     setCopiedAnnotations(false);
     setActiveAnnotationId(null);
     setAnnotationDraft(draft);
+  }
+
+  function handleAnnotationPointerMove(event: MouseEvent<HTMLDivElement>) {
+    if (!annotationMode || annotationDraft) {
+      return;
+    }
+    const eventElement = event.target instanceof Element ? event.target : null;
+    if (eventElement?.closest(".annotation-pin, .annotation-popover")) {
+      setHoverAnnotationTarget(null);
+      return;
+    }
+
+    const target = findAnnotationTargetElement(eventElement, appScreenRef.current);
+    const targetId = target?.dataset.annotationTarget;
+    if (!targetId) {
+      setHoverAnnotationTarget(null);
+      return;
+    }
+
+    const targetLabel = target.dataset.annotationLabel || currentViewLabel;
+    setHoverAnnotationTarget((currentTarget) =>
+      currentTarget?.targetId === targetId && currentTarget.targetLabel === targetLabel
+        ? currentTarget
+        : { targetId, targetLabel },
+    );
+  }
+
+  function handleAnnotationPointerClick(event: MouseEvent<HTMLDivElement>) {
+    if (!annotationMode) {
+      return;
+    }
+    const eventElement = event.target instanceof Element ? event.target : null;
+    if (eventElement?.closest(".annotation-pin, .annotation-popover")) {
+      return;
+    }
+
+    const screenElement = appScreenRef.current;
+    if (!screenElement) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const target = findAnnotationTargetElement(eventElement, screenElement);
+    const screenRect = screenElement.getBoundingClientRect();
+    const targetRect = target?.getBoundingClientRect();
+    const fallbackX = ((event.clientX - screenRect.left) / screenRect.width) * 100;
+    const fallbackY = ((event.clientY - screenRect.top) / screenRect.height) * 100;
+
+    createAnnotationDraft({
+      x: fallbackX,
+      y: fallbackY,
+      text: "",
+      targetId: target?.dataset.annotationTarget,
+      targetLabel: target?.dataset.annotationLabel || currentViewLabel,
+      targetOffsetX: targetRect ? ((event.clientX - targetRect.left) / targetRect.width) * 100 : undefined,
+      targetOffsetY: targetRect ? ((event.clientY - targetRect.top) / targetRect.height) * 100 : undefined,
+      viewKey: currentViewKey,
+      viewLabel: currentViewLabel,
+    });
   }
 
   function editAnnotation(annotation: Annotation) {
@@ -1365,6 +1412,7 @@ export function App() {
     }
 
     setAnnotationDraft(null);
+    setHoverAnnotationTarget(null);
   }
 
   function deleteAnnotation(id: string) {
@@ -1373,6 +1421,7 @@ export function App() {
     );
     setAnnotationDraft((currentDraft) => (currentDraft?.id === id ? null : currentDraft));
     setActiveAnnotationId((currentId) => (currentId === id ? null : currentId));
+    setHoverAnnotationTarget(null);
   }
 
   function clearAnnotations() {
@@ -1382,6 +1431,7 @@ export function App() {
     setAnnotations([]);
     setAnnotationDraft(null);
     setActiveAnnotationId(null);
+    setHoverAnnotationTarget(null);
     setCopiedAnnotations(false);
   }
 
@@ -1425,6 +1475,7 @@ export function App() {
         onToggleMode={() => {
           setAnnotationMode((currentMode) => !currentMode);
           setAnnotationDraft(null);
+          setHoverAnnotationTarget(null);
         }}
         onToggleVisibility={() => setShowAnnotations((currentValue) => !currentValue)}
         onCopy={copyAnnotationsForCodex}
@@ -1435,7 +1486,13 @@ export function App() {
       <div className="prototype-workbench">
         <div className="preview-surface">
           <div className="phone-shell">
-            <div className="app-screen" ref={appScreenRef}>
+            <div
+              className="app-screen"
+              ref={appScreenRef}
+              onMouseMoveCapture={handleAnnotationPointerMove}
+              onMouseLeave={() => setHoverAnnotationTarget(null)}
+              onClickCapture={handleAnnotationPointerClick}
+            >
               <PhoneStatusBar />
 
               <div
@@ -1498,12 +1555,11 @@ export function App() {
                 annotationMode={annotationMode}
                 showAnnotations={showAnnotations}
                 activeAnnotationId={activeAnnotationId}
+                hoverTarget={hoverAnnotationTarget}
                 screenRef={appScreenRef}
-                scrollContainerRef={screenRef}
                 viewKey={currentViewKey}
                 currentViewLabel={currentViewLabel}
                 layoutVersion={annotationLayoutVersion}
-                onCreateDraft={createAnnotationDraft}
                 onEdit={editAnnotation}
                 onDraftTextChange={(text) =>
                   setAnnotationDraft((currentDraft) =>
@@ -1511,7 +1567,10 @@ export function App() {
                   )
                 }
                 onSaveDraft={saveAnnotationDraft}
-                onCancelDraft={() => setAnnotationDraft(null)}
+                onCancelDraft={() => {
+                  setAnnotationDraft(null);
+                  setHoverAnnotationTarget(null);
+                }}
                 onDeleteDraft={() => {
                   if (annotationDraft?.id) {
                     deleteAnnotation(annotationDraft.id);
