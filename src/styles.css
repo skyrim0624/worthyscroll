@@ -479,17 +479,50 @@ textarea:focus-visible {
 }
 
 .phone-shell {
+  position: relative;
+  isolation: isolate;
   width: 100%;
   height: min(900px, calc(100vh - 68px));
   min-height: 760px;
-  padding: 12px;
-  border-radius: 58px;
+  padding: 14px;
+  border-radius: 70px;
   background:
-    linear-gradient(145deg, #0c0d0d, #1c1e1f 34%, #f2efe3 35%, #8f8d7c 39%, #111 42%),
-    #121313;
+    linear-gradient(145deg, #191a1d, #050506 24%, #18191b 72%, #020203),
+    #08090a;
   box-shadow:
-    0 34px 80px rgba(25, 27, 30, 0.24),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+    0 38px 88px rgba(15, 17, 20, 0.26),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.08),
+    inset 0 0 0 8px #08090a;
+}
+
+.phone-shell::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  z-index: -2;
+  border-radius: 76px;
+  background:
+    linear-gradient(100deg, #1f2024, #050506 18%, #34363a 49%, #090a0b 76%, #222428),
+    #17181a;
+  box-shadow:
+    inset 2px 0 3px rgba(255, 255, 255, 0.18),
+    inset -2px 0 3px rgba(255, 255, 255, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.phone-shell::after {
+  content: "";
+  position: absolute;
+  left: -7px;
+  top: 132px;
+  z-index: -1;
+  width: 5px;
+  height: 72px;
+  border-radius: 5px 0 0 5px;
+  background: linear-gradient(180deg, #2f3034, #08090a);
+  box-shadow:
+    0 112px 0 #090a0b,
+    439px 54px 0 #090a0b;
 }
 
 .app-screen {
@@ -498,9 +531,27 @@ textarea:focus-visible {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-radius: 46px;
+  border-radius: 56px;
   background: var(--screen-bg);
-  padding: 22px 24px 34px;
+  padding: 30px 24px 42px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.58),
+    inset 0 0 0 2px rgba(10, 11, 13, 0.08),
+    inset 0 18px 30px rgba(255, 255, 255, 0.54);
+}
+
+.app-screen::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 11px;
+  z-index: 24;
+  width: 134px;
+  height: 5px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: rgba(17, 18, 21, 0.9);
+  pointer-events: none;
 }
 
 .app-viewport {
@@ -535,31 +586,49 @@ textarea:focus-visible {
 
 .status-bar {
   position: relative;
-  height: 42px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 12px;
-  font-size: 21px;
-  font-weight: 760;
+  padding: 0 15px 0 18px;
+  color: #111216;
+  font-size: 19px;
+  font-weight: 820;
   line-height: 1;
 }
 
 .dynamic-island {
   position: absolute;
   left: 50%;
-  top: 5px;
-  width: 132px;
-  height: 38px;
+  top: 4px;
+  width: 136px;
+  height: 39px;
   transform: translateX(-50%);
-  border-radius: 24px;
-  background: #050505;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 78% 50%, rgba(56, 60, 66, 0.72), rgba(0, 0, 0, 0) 10px),
+    #050505;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    inset 0 -2px 8px rgba(255, 255, 255, 0.06),
+    0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.dynamic-island::after {
+  content: "";
+  position: absolute;
+  right: 22px;
+  top: 13px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 34%, #5d6472, #111216 48%, #020203 72%);
 }
 
 .status-icons {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
 }
 
 .cell-bars {
@@ -607,6 +676,17 @@ textarea:focus-visible {
   border: 2.5px solid #111;
   border-radius: 4px;
   position: relative;
+}
+
+.battery-icon::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 18px;
+  height: 6px;
+  border-radius: 2px;
+  background: #111;
 }
 
 .battery-icon::after {
@@ -1869,6 +1949,12 @@ textarea:focus-visible {
     border-radius: 0;
     background: var(--screen-bg);
     box-shadow: none;
+  }
+
+  .phone-shell::before,
+  .phone-shell::after,
+  .app-screen::after {
+    display: none;
   }
 
   .app-screen {
