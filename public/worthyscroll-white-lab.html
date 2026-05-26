@@ -1,0 +1,829 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>刷点好的 | White Lab</title>
+    <style>
+      :root {
+        --page: #fbfbfb;
+        --surface: #ffffff;
+        --surface-soft: #f6f6f5;
+        --surface-quiet: #fafafa;
+        --text: #171717;
+        --text-soft: #5f5f5f;
+        --text-faint: #8b8b8b;
+        --line: rgba(23, 23, 23, 0.08);
+        --line-strong: rgba(23, 23, 23, 0.12);
+        --accent: #111111;
+        --success: #2f8f64;
+        --shadow-soft: 0 22px 60px rgba(20, 20, 20, 0.08);
+        --shadow-card: 0 8px 28px rgba(20, 20, 20, 0.04);
+        --font-sans: "SF Pro Display", "SF Pro Text", "PingFang SC", "Hiragino Sans GB", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        background: var(--page);
+        color: var(--text);
+        font-family: var(--font-sans);
+        font-weight: 300;
+        letter-spacing: 0;
+      }
+
+      button,
+      input {
+        color: inherit;
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      button {
+        border: 0;
+        cursor: pointer;
+      }
+
+      .stage {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 28px;
+      }
+
+      .phone {
+        width: min(430px, calc(100vw - 28px));
+        height: min(900px, calc(100vh - 40px));
+        min-height: 720px;
+        position: relative;
+        overflow: hidden;
+        background: var(--surface);
+        border: 1px solid rgba(23, 23, 23, 0.08);
+        border-radius: 34px;
+        box-shadow: var(--shadow-soft);
+      }
+
+      .app {
+        height: 100%;
+        display: grid;
+        grid-template-rows: auto auto 1fr auto;
+        background: linear-gradient(#ffffff 0%, #ffffff 58%, #fbfbfb 100%);
+      }
+
+      .status-bar {
+        height: 36px;
+        padding: 11px 22px 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        color: #1c1c1c;
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      .system-icons {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .signal {
+        width: 17px;
+        height: 11px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        align-items: end;
+        gap: 2px;
+      }
+
+      .signal span {
+        width: 3px;
+        border-radius: 3px;
+        background: currentColor;
+      }
+
+      .signal span:nth-child(1) { height: 4px; }
+      .signal span:nth-child(2) { height: 6px; }
+      .signal span:nth-child(3) { height: 8px; }
+      .signal span:nth-child(4) { height: 10px; }
+
+      .battery {
+        width: 22px;
+        height: 11px;
+        border: 1.2px solid currentColor;
+        border-radius: 3px;
+        position: relative;
+        padding: 1px;
+      }
+
+      .battery::after {
+        content: "";
+        position: absolute;
+        right: -4px;
+        top: 3px;
+        width: 2px;
+        height: 5px;
+        border-radius: 2px;
+        background: currentColor;
+      }
+
+      .battery span {
+        display: block;
+        height: 100%;
+        width: 72%;
+        border-radius: 2px;
+        background: currentColor;
+      }
+
+      .top {
+        padding: 8px 22px 14px;
+      }
+
+      .masthead {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .brand {
+        min-width: 0;
+      }
+
+      .brand h1 {
+        margin: 0;
+        font-size: 29px;
+        line-height: 1.08;
+        font-weight: 400;
+      }
+
+      .brand p {
+        margin: 6px 0 0;
+        color: var(--text-faint);
+        font-size: 13px;
+        line-height: 1;
+        font-weight: 300;
+      }
+
+      .icon-button {
+        width: 38px;
+        height: 38px;
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.82);
+        color: #1a1a1a;
+        font-size: 19px;
+        transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+      }
+
+      .icon-button:hover {
+        transform: translateY(-1px);
+        border-color: var(--line-strong);
+        background: #ffffff;
+      }
+
+      .search {
+        height: 42px;
+        margin-top: 22px;
+        display: grid;
+        grid-template-columns: 18px 1fr;
+        align-items: center;
+        gap: 10px;
+        padding: 0 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface-quiet);
+        color: var(--text-faint);
+        font-size: 14px;
+        font-weight: 300;
+      }
+
+      .search svg {
+        width: 17px;
+        height: 17px;
+        stroke-width: 1.6;
+      }
+
+      .tabs {
+        margin: 0 22px 14px;
+        height: 40px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 4px;
+        padding: 4px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface-soft);
+      }
+
+      .tab {
+        border-radius: 6px;
+        background: transparent;
+        color: var(--text-soft);
+        font-size: 14px;
+        font-weight: 400;
+        transition: background 180ms ease, color 180ms ease, box-shadow 180ms ease;
+      }
+
+      .tab.is-active {
+        background: var(--surface);
+        color: var(--text);
+        box-shadow: 0 1px 8px rgba(20, 20, 20, 0.05);
+      }
+
+      .screen {
+        overflow: auto;
+        padding: 0 22px 90px;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(20, 20, 20, 0.24) transparent;
+      }
+
+      .screen::-webkit-scrollbar {
+        width: 4px;
+      }
+
+      .screen::-webkit-scrollbar-thumb {
+        background: rgba(20, 20, 20, 0.24);
+        border-radius: 999px;
+      }
+
+      .screen[hidden] {
+        display: none;
+      }
+
+      .lead {
+        position: relative;
+        margin-bottom: 14px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        box-shadow: var(--shadow-card);
+      }
+
+      .lead-visual {
+        height: 154px;
+        overflow: hidden;
+        border-radius: 7px;
+        background: #f1f1ef;
+      }
+
+      .lead-visual img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+        filter: saturate(0.72) contrast(0.96) brightness(1.03);
+      }
+
+      .lead-visual.is-empty {
+        display: grid;
+        place-items: center;
+        color: #c4c4c4;
+        font-size: 42px;
+        font-weight: 200;
+      }
+
+      .lead-body {
+        padding: 14px 2px 1px;
+      }
+
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 9px;
+        color: var(--text-faint);
+        font-size: 12px;
+        font-weight: 300;
+      }
+
+      .eyebrow strong {
+        color: var(--text-soft);
+        font-weight: 400;
+      }
+
+      .lead h2,
+      .item h2 {
+        margin: 0;
+        font-weight: 500;
+        letter-spacing: 0;
+      }
+
+      .lead h2 {
+        font-size: 19px;
+        line-height: 1.3;
+        font-weight: 400;
+      }
+
+      .summary {
+        margin: 9px 0 0;
+        color: var(--text-soft);
+        font-size: 14px;
+        line-height: 1.55;
+        font-weight: 300;
+      }
+
+      .list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .item {
+        min-height: 128px;
+        display: grid;
+        grid-template-columns: 1fr 96px;
+        gap: 12px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: 0 6px 22px rgba(20, 20, 20, 0.035);
+        transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+      }
+
+      .item:hover {
+        transform: translateY(-1px);
+        border-color: var(--line-strong);
+        box-shadow: 0 10px 30px rgba(20, 20, 20, 0.05);
+      }
+
+      .item-main {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .item h2 {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        font-size: 16px;
+        line-height: 1.34;
+        font-weight: 400;
+      }
+
+      .item p {
+        margin: 7px 0 0;
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        color: var(--text-soft);
+        font-size: 13px;
+        line-height: 1.48;
+        font-weight: 300;
+      }
+
+      .meta-row {
+        margin-top: auto;
+        padding-top: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .tag-row {
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .source-dot {
+        width: 7px;
+        height: 7px;
+        flex: 0 0 auto;
+        border-radius: 50%;
+        background: #d8d8d6;
+      }
+
+      .tag {
+        max-width: 118px;
+        overflow: hidden;
+        color: var(--text-faint);
+        font-size: 12px;
+        font-weight: 300;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .save {
+        width: 28px;
+        height: 28px;
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        background: #fff;
+        color: #202020;
+        font-size: 16px;
+        line-height: 1;
+      }
+
+      .save.is-saved {
+        color: var(--success);
+        border-color: rgba(47, 143, 100, 0.22);
+        background: rgba(47, 143, 100, 0.06);
+      }
+
+      .thumb {
+        width: 96px;
+        height: 102px;
+        overflow: hidden;
+        align-self: stretch;
+        border: 1px solid rgba(23, 23, 23, 0.06);
+        border-radius: 8px;
+        background: #f2f2f0;
+      }
+
+      .thumb img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+        filter: saturate(0.7) contrast(0.96) brightness(1.04);
+      }
+
+      .thumb.empty {
+        display: grid;
+        place-items: center;
+        color: #c7c7c5;
+        font-size: 28px;
+        font-weight: 200;
+      }
+
+      .empty-state {
+        min-height: 360px;
+        display: grid;
+        place-items: center;
+        padding: 38px 22px;
+        text-align: center;
+        color: var(--text-faint);
+      }
+
+      .empty-state h2 {
+        margin: 0 0 8px;
+        color: var(--text);
+        font-size: 22px;
+        font-weight: 400;
+      }
+
+      .empty-state p {
+        max-width: 260px;
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.6;
+        font-weight: 300;
+      }
+
+      .bottom {
+        position: absolute;
+        left: 16px;
+        right: 16px;
+        bottom: 18px;
+        height: 64px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 4px;
+        padding: 6px;
+        border: 1px solid rgba(23, 23, 23, 0.08);
+        border-radius: 22px;
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow: 0 18px 36px rgba(20, 20, 20, 0.1);
+        backdrop-filter: blur(18px);
+      }
+
+      .nav-item {
+        display: grid;
+        place-items: center;
+        grid-template-rows: 20px auto;
+        gap: 3px;
+        border-radius: 16px;
+        background: transparent;
+        color: var(--text-faint);
+        font-size: 11px;
+        font-weight: 400;
+      }
+
+      .nav-item svg {
+        width: 19px;
+        height: 19px;
+        stroke-width: 1.7;
+      }
+
+      .nav-item.is-active {
+        background: #f4f4f3;
+        color: var(--text);
+      }
+
+      @media (max-width: 520px) {
+        .stage {
+          padding: 0;
+          background: #fff;
+        }
+
+        .phone {
+          width: 100vw;
+          height: 100vh;
+          min-height: 100vh;
+          border: 0;
+          border-radius: 0;
+          box-shadow: none;
+        }
+
+        .top,
+        .screen {
+          padding-left: 18px;
+          padding-right: 18px;
+        }
+
+        .tabs {
+          margin-left: 18px;
+          margin-right: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="stage">
+      <div class="phone" aria-label="WorthyScroll white interface experiment">
+        <div class="app">
+          <div class="status-bar">
+            <span>9:41</span>
+            <div class="system-icons" aria-hidden="true">
+              <div class="signal"><span></span><span></span><span></span><span></span></div>
+              <span>5G</span>
+              <div class="battery"><span></span></div>
+            </div>
+          </div>
+
+          <header class="top">
+            <div class="masthead">
+              <div class="brand">
+                <h1>刷点好的</h1>
+                <p>by Ziyang</p>
+              </div>
+              <button class="icon-button" type="button" aria-label="刷新内容" id="refreshButton">↻</button>
+            </div>
+            <div class="search" aria-label="搜索">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                <circle cx="11" cy="11" r="7"></circle>
+                <path d="m20 20-3.5-3.5"></path>
+              </svg>
+              <span>搜索文章</span>
+            </div>
+          </header>
+
+          <nav class="tabs" aria-label="内容切换">
+            <button class="tab is-active" type="button" data-screen="feed">内容</button>
+            <button class="tab" type="button" data-screen="saved">收藏</button>
+          </nav>
+
+          <section class="screen" id="feedScreen" aria-label="内容">
+            <article class="lead" id="leadCard"></article>
+            <div class="list" id="feedList"></div>
+          </section>
+
+          <section class="screen" id="savedScreen" aria-label="收藏" hidden>
+            <div class="list" id="savedList"></div>
+          </section>
+
+          <nav class="bottom" aria-label="底部导航">
+            <button class="nav-item is-active" type="button" data-screen="feed">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                <path d="M5 5.5h14"></path>
+                <path d="M5 12h14"></path>
+                <path d="M5 18.5h9"></path>
+              </svg>
+              <span>内容</span>
+            </button>
+            <button class="nav-item" type="button" data-screen="saved">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                <path d="M6 4.8c0-1 0.8-1.8 1.8-1.8h8.4c1 0 1.8.8 1.8 1.8V21l-6-3.6L6 21V4.8Z"></path>
+              </svg>
+              <span>收藏</span>
+            </button>
+          </nav>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const fallbackItems = [
+        {
+          id: "sample-1",
+          title: "一文读懂 Harness Engineering：从 14 篇工程文章中寻找可靠的 AI 壳",
+          sourceName: "Hao好聊趋势",
+          savedAt: "工程",
+          estimatedMinutes: 8,
+          markdown: "从工程实践里抽取一套更稳的 AI 应用组织方式，让模型的能力被约束在清晰的上下文和边界里。"
+        },
+        {
+          id: "sample-2",
+          title: "当内容平台从刺激转向品味，产品会发生什么变化",
+          sourceName: "收藏",
+          savedAt: "产品",
+          estimatedMinutes: 6,
+          markdown: "真正的问题不是少看，而是把注意力交给更值得的内容。"
+        }
+      ];
+
+      const state = {
+        screen: "feed",
+        items: fallbackItems,
+        saved: new Set(["sample-1"])
+      };
+
+      const leadCard = document.querySelector("#leadCard");
+      const feedList = document.querySelector("#feedList");
+      const savedList = document.querySelector("#savedList");
+      const feedScreen = document.querySelector("#feedScreen");
+      const savedScreen = document.querySelector("#savedScreen");
+
+      function plainText(markdown) {
+        const lines = String(markdown || "")
+          .replace(/!\[[^\]]*]\([^)]*\)/g, " ")
+          .replace(/\[[^\]]*]\([^)]*\)/g, " ")
+          .replace(/^#+\s*/gm, "")
+          .replace(/[`*_>#-]/g, " ")
+          .split(/\n+/)
+          .map((line) => line.trim())
+          .filter((line) => line && !/^(图片|视频截图|发布时间|阅读|作者|微信扫一扫)/.test(line));
+
+        return lines
+          .join(" ")
+          .replace(/\s+/g, " ")
+          .trim();
+      }
+
+      function firstImage(markdown) {
+        const match = String(markdown || "").match(/!\[[^\]]*]\((\/note-assets\/[^)]+)\)/);
+        return match ? match[1] : "";
+      }
+
+      function clip(text, length) {
+        const value = String(text || "").trim();
+        return value.length > length ? `${value.slice(0, length)}...` : value;
+      }
+
+      function normalizeItem(item, index) {
+        const summary = plainText(item.markdown);
+        return {
+          id: item.id || `item-${index}`,
+          title: item.title || "未命名内容",
+          sourceName: item.sourceName || item.author || "收藏",
+          label: item.savedAt || item.sourceType || "文章",
+          minutes: item.estimatedMinutes || Math.max(2, Math.round((item.wordCount || 900) / 420)),
+          summary: clip(summary, 98),
+          image: firstImage(item.markdown)
+        };
+      }
+
+      function createThumb(item) {
+        if (item.image) {
+          return `<div class="thumb"><img src="${item.image}" alt="" loading="lazy"></div>`;
+        }
+
+        return `<div class="thumb empty" aria-hidden="true">∿</div>`;
+      }
+
+      function saveButton(item) {
+        const saved = state.saved.has(item.id);
+        return `<button class="save ${saved ? "is-saved" : ""}" type="button" data-save="${item.id}" aria-label="${saved ? "取消收藏" : "收藏"}">${saved ? "◆" : "◇"}</button>`;
+      }
+
+      function renderLead(item) {
+        const image = item.image
+          ? `<div class="lead-visual"><img src="${item.image}" alt="" loading="lazy"></div>`
+          : `<div class="lead-visual is-empty" aria-hidden="true">∿</div>`;
+
+        leadCard.innerHTML = `
+          ${image}
+          <div class="lead-body">
+            <div class="eyebrow">
+              <strong>${item.sourceName}</strong>
+              <span>${item.minutes} 分钟</span>
+            </div>
+            <h2>${item.title}</h2>
+            <p class="summary">${item.summary}</p>
+          </div>
+        `;
+      }
+
+      function renderItem(item) {
+        return `
+          <article class="item">
+            <div class="item-main">
+              <div class="eyebrow">
+                <strong>${item.sourceName}</strong>
+                <span>${item.minutes} 分钟</span>
+              </div>
+              <h2>${item.title}</h2>
+              <p>${item.summary}</p>
+              <div class="meta-row">
+                <div class="tag-row">
+                  <span class="source-dot"></span>
+                  <span class="tag">${item.label}</span>
+                </div>
+                ${saveButton(item)}
+              </div>
+            </div>
+            ${createThumb(item)}
+          </article>
+        `;
+      }
+
+      function renderEmpty() {
+        savedList.innerHTML = `
+          <div class="empty-state">
+            <div>
+              <h2>还没有收藏</h2>
+              <p>看到值得留下的内容时，点一下右下角的收藏标。</p>
+            </div>
+          </div>
+        `;
+      }
+
+      function render() {
+        const [lead, ...rest] = state.items;
+        renderLead(lead || fallbackItems[0]);
+        feedList.innerHTML = rest.map(renderItem).join("");
+
+        const savedItems = state.items.filter((item) => state.saved.has(item.id));
+        if (savedItems.length === 0) {
+          renderEmpty();
+        } else {
+          savedList.innerHTML = savedItems.map(renderItem).join("");
+        }
+      }
+
+      function switchScreen(screen) {
+        state.screen = screen;
+        feedScreen.hidden = screen !== "feed";
+        savedScreen.hidden = screen !== "saved";
+        document.querySelectorAll("[data-screen]").forEach((button) => {
+          button.classList.toggle("is-active", button.dataset.screen === screen);
+        });
+      }
+
+      async function loadItems() {
+        try {
+          const response = await fetch("/content-items.json", { cache: "no-store" });
+          const data = await response.json();
+          state.items = data
+            .filter((item) => item.sourceType !== "wechat_video")
+            .slice(0, 9)
+            .map(normalizeItem);
+          if (state.items[1]) {
+            state.saved = new Set([state.items[1].id]);
+          }
+        } catch (error) {
+          state.items = fallbackItems.map(normalizeItem);
+        }
+        render();
+      }
+
+      document.addEventListener("click", (event) => {
+        const screenButton = event.target.closest("[data-screen]");
+        if (screenButton) {
+          switchScreen(screenButton.dataset.screen);
+          return;
+        }
+
+        const save = event.target.closest("[data-save]");
+        if (save) {
+          const id = save.dataset.save;
+          if (state.saved.has(id)) {
+            state.saved.delete(id);
+          } else {
+            state.saved.add(id);
+          }
+          render();
+        }
+      });
+
+      document.querySelector("#refreshButton").addEventListener("click", () => {
+        state.items = [...state.items.slice(1), state.items[0]].filter(Boolean);
+        render();
+      });
+
+      loadItems();
+    </script>
+  </body>
+</html>
